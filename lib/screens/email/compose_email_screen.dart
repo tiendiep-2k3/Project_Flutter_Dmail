@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:file_picker/file_picker.dart';
 
 class ComposeEmailScreen extends StatefulWidget {
   final String? toEmail;
@@ -32,6 +34,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
   bool showBcc = false;
   String? _draftDocId;
   Timer? _draftTimer;
+  List<PlatformFile> attachedFiles = [];
 
   @override
   void initState() {
@@ -94,6 +97,25 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
     }
   }
 
+  Future<String> uploadFileToStorage(PlatformFile file) async {
+  if (file.bytes == null) {
+    throw Exception('Không đọc được nội dung file: ${file.name}');
+  }
+
+  String contentType = 'application/octet-stream';
+  final ext = file.extension?.toLowerCase();
+  if (ext == 'jpg' || ext == 'jpeg') contentType = 'image/jpeg';
+  else if (ext == 'png') contentType = 'image/png';
+  else if (ext == 'webp') contentType = 'image/webp';
+  else if (ext == 'pdf') contentType = 'application/pdf';
+  else if (ext == 'docx') contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+  final ref = FirebaseStorage.instance.ref().child('attachments/${file.name}');
+  final metadata = SettableMetadata(contentType: contentType);
+  final upload = await ref.putData(file.bytes!, metadata);
+  return await upload.ref.getDownloadURL();
+}
+
   Future<void> _sendEmail() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isSending = true);
@@ -125,6 +147,20 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
       return;
     }
 
+    final attachments = <Map<String, String>>[];
+    for (final file in attachedFiles) {
+      try {
+        final url = await uploadFileToStorage(file);
+        attachments.add({'fileName': file.name, 'fileUrl': url});
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi upload tệp: ${file.name}')),
+        );
+        setState(() => _isSending = false);
+        return;
+      }
+    }
+
     final data = {
       'fromUid': fromUid,
       'toUid': toUid,
@@ -135,6 +171,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
       'timestamp': FieldValue.serverTimestamp(),
       'isRead': false,
       'isDraft': false,
+      'attachments': attachments,
     };
 
     try {
@@ -153,9 +190,20 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gửi email thất bại: $e')),
       );
+      setState(() => _isSending = false);
+      return;
     }
 
     setState(() => _isSending = false);
+  }
+
+  Future<void> pickFiles() async {
+    final result = await FilePicker.platform.pickFiles(allowMultiple: true, withData: true);
+    if (result != null) {
+      setState(() {
+        attachedFiles = result.files;
+      });
+    }
   }
 
   @override
@@ -179,7 +227,6 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
           key: _formKey,
           child: Column(
             children: [
-              // To + Cc Bcc buttons
               Row(
                 children: [
                   Expanded(
@@ -190,14 +237,8 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
                           value == null || value.isEmpty ? 'Bắt buộc nhập email' : null,
                     ),
                   ),
-                  TextButton(
-                    onPressed: () => setState(() => showCc = !showCc),
-                    child: const Text('Cc'),
-                  ),
-                  TextButton(
-                    onPressed: () => setState(() => showBcc = !showBcc),
-                    child: const Text('Bcc'),
-                  ),
+                  TextButton(onPressed: () => setState(() => showCc = !showCc), child: const Text('Cc')),
+                  TextButton(onPressed: () => setState(() => showBcc = !showBcc), child: const Text('Bcc')),
                 ],
               ),
               if (showCc)
@@ -225,6 +266,15 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
                 ),
               ),
               const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: pickFiles,
+                icon: const Icon(Icons.attach_file),
+                label: const Text('Đính kèm tệp'),
+              ),
+              Column(
+                children: attachedFiles.map((file) => Text(file.name)).toList(),
+              ),
+              const SizedBox(height: 8),
               ElevatedButton(
                 onPressed: _isSending ? null : _sendEmail,
                 child: Text(_isSending ? 'Đang gửi...' : 'Gửi email'),

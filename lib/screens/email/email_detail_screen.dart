@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:test3/screens/email/compose_email_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class EmailDetailScreen extends StatefulWidget {
   final String subject;
@@ -11,6 +12,7 @@ class EmailDetailScreen extends StatefulWidget {
   final List<String>? ccUids;
   final List<String>? bccUids;
   final DateTime? timestamp;
+  final List<dynamic>? attachments;
 
   const EmailDetailScreen({
     Key? key,
@@ -21,6 +23,7 @@ class EmailDetailScreen extends StatefulWidget {
     this.ccUids,
     this.bccUids,
     this.timestamp,
+    this.attachments,
   }) : super(key: key);
 
   @override
@@ -43,17 +46,14 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
   Future<void> _loadEmails() async {
     final usersRef = FirebaseFirestore.instance.collection('users');
 
-    // From
     final fromSnap = await usersRef.doc(widget.fromUid).get();
     fromEmail = fromSnap.data()?['email'] ?? '(Không rõ)';
 
-    // To
     if (widget.toUid != null) {
       final toSnap = await usersRef.doc(widget.toUid!).get();
       toEmail = toSnap.data()?['email'];
     }
 
-    // CC
     if (widget.ccUids != null) {
       for (final ccUid in widget.ccUids!) {
         final ccSnap = await usersRef.doc(ccUid).get();
@@ -65,8 +65,7 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
     setState(() {});
   }
 
-  bool get isBccUser =>
-      widget.bccUids != null && widget.bccUids!.contains(currentUid);
+  bool get isBccUser => widget.bccUids != null && widget.bccUids!.contains(currentUid);
 
   @override
   Widget build(BuildContext context) {
@@ -111,6 +110,27 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
                 style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             Text(widget.body, style: const TextStyle(fontSize: 16)),
+            const SizedBox(height: 16),
+            if (widget.attachments != null && widget.attachments!.isNotEmpty) ...[
+              const Text("Tệp đính kèm:", style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Column(
+                children: widget.attachments!.map((attachment) {
+                  final fileName = attachment['fileName'] ?? 'Tệp';
+                  final fileUrl = attachment['fileUrl'];
+                  return ListTile(
+                    title: Text(fileName),
+                    trailing: const Icon(Icons.download),
+                    onTap: () async {
+                      final uri = Uri.parse(fileUrl);
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      }
+                    },
+                  );
+                }).toList(),
+              ),
+            ],
             const Spacer(),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
