@@ -219,65 +219,318 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Soạn Email')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: isDarkMode ? theme.scaffoldBackgroundColor : Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Soạn Email',
+          style: TextStyle(
+            color: isDarkMode ? Colors.white : Colors.black87,
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            onPressed: () {
+              // TODO: Implement delete draft
+              Navigator.pop(context);
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.send),
+            onPressed: _isSending ? null : _sendEmail,
+          ),
+        ],
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          color: isDarkMode ? theme.scaffoldBackgroundColor : Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
         child: Form(
           key: _formKey,
           child: Column(
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _toController,
-                      decoration: const InputDecoration(labelText: 'Đến'),
-                      validator: (value) =>
-                          value == null || value.isEmpty ? 'Bắt buộc nhập email' : null,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Colors.grey.withOpacity(0.2),
+                      width: 1,
                     ),
                   ),
-                  TextButton(onPressed: () => setState(() => showCc = !showCc), child: const Text('Cc')),
-                  TextButton(onPressed: () => setState(() => showBcc = !showBcc), child: const Text('Bcc')),
-                ],
-              ),
-              if (showCc)
-                TextFormField(
-                  controller: _ccController,
-                  decoration: const InputDecoration(labelText: 'Cc (phân cách bằng dấu phẩy)'),
                 ),
-              if (showBcc)
-                TextFormField(
-                  controller: _bccController,
-                  decoration: const InputDecoration(labelText: 'Bcc (phân cách bằng dấu phẩy)'),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 80,
+                          child: Text(
+                            'Đến:',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _toController,
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              hintText: 'Nhập email người nhận',
+                              contentPadding: EdgeInsets.symmetric(vertical: 8),
+                            ),
+                            validator: (value) =>
+                                value == null || value.isEmpty ? 'Bắt buộc nhập email' : null,
+                          ),
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            TextButton(
+                              onPressed: () => setState(() => showCc = !showCc),
+                              child: Text(
+                                'Cc',
+                                style: TextStyle(
+                                  color: theme.primaryColor,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => setState(() => showBcc = !showBcc),
+                              child: Text(
+                                'Bcc',
+                                style: TextStyle(
+                                  color: theme.primaryColor,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    if (showCc)
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 80,
+                            child: Text(
+                              'Cc:',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _ccController,
+                              decoration: const InputDecoration(
+                                border: InputBorder.none,
+                                hintText: 'Nhập email CC',
+                                contentPadding: EdgeInsets.symmetric(vertical: 8),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    if (showBcc)
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 80,
+                            child: Text(
+                              'Bcc:',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _bccController,
+                              decoration: const InputDecoration(
+                                border: InputBorder.none,
+                                hintText: 'Nhập email BCC',
+                                contentPadding: EdgeInsets.symmetric(vertical: 8),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 80,
+                          child: Text(
+                            'Tiêu đề:',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _subjectController,
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              hintText: 'Nhập tiêu đề email',
+                              contentPadding: EdgeInsets.symmetric(vertical: 8),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              TextFormField(
-                controller: _subjectController,
-                decoration: const InputDecoration(labelText: 'Tiêu đề'),
               ),
               Expanded(
                 child: TextFormField(
                   controller: _bodyController,
                   maxLines: null,
                   expands: true,
-                  decoration: const InputDecoration(labelText: 'Nội dung'),
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    hintText: 'Nhập nội dung email',
+                    contentPadding: EdgeInsets.all(16),
+                  ),
                   validator: (value) =>
                       value == null || value.isEmpty ? 'Nội dung không được để trống' : null,
                 ),
               ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: pickFiles,
-                icon: const Icon(Icons.attach_file),
-                label: const Text('Đính kèm tệp'),
-              ),
-              Column(
-                children: attachedFiles.map((file) => Text(file.name)).toList(),
-              ),
-              const SizedBox(height: 8),
-              ElevatedButton(
-                onPressed: _isSending ? null : _sendEmail,
-                child: Text(_isSending ? 'Đang gửi...' : 'Gửi email'),
+              if (attachedFiles.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      top: BorderSide(
+                        color: Colors.grey.withOpacity(0.2),
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        child: Text(
+                          'Tệp đính kèm:',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        height: 60,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: attachedFiles.length,
+                          itemBuilder: (context, index) {
+                            final file = attachedFiles[index];
+                            return Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 4),
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: theme.primaryColor.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.insert_drive_file,
+                                    size: 20,
+                                    color: theme.primaryColor,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    file.name,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: theme.primaryColor,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  IconButton(
+                                    icon: const Icon(Icons.close, size: 16),
+                                    onPressed: () {
+                                      setState(() {
+                                        attachedFiles.removeAt(index);
+                                      });
+                                    },
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(
+                      color: Colors.grey.withOpacity(0.2),
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: pickFiles,
+                      icon: const Icon(Icons.attach_file),
+                      label: const Text('Đính kèm tệp'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.primaryColor.withOpacity(0.1),
+                        foregroundColor: theme.primaryColor,
+                        elevation: 0,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      onPressed: _isSending ? null : _sendEmail,
+                      icon: Icon(_isSending ? Icons.hourglass_empty : Icons.send),
+                      label: Text(_isSending ? 'Đang gửi...' : 'Gửi'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.primaryColor,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
