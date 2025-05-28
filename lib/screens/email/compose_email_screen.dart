@@ -227,181 +227,59 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: isDarkMode ? theme.scaffoldBackgroundColor : Colors.white,
+        backgroundColor: Colors.deepPurple,
         leading: IconButton(
-          icon: const Icon(Icons.close),
+          icon: const Icon(Icons.close, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
+        title: const Text(
           'Soạn Email',
           style: TextStyle(
-            color: isDarkMode ? Colors.white : Colors.black87,
+            color: Colors.white,
             fontSize: 18,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_outline),
+            icon: const Icon(Icons.delete_outline, color: Colors.white),
             onPressed: () {
               Navigator.pop(context);
             },
           ),
           IconButton(
-            icon: const Icon(Icons.send),
+            icon: const Icon(Icons.send, color: Colors.white),
             onPressed: _isSending ? null : _sendEmail,
           ),
         ],
       ),
       body: Container(
-        decoration: BoxDecoration(
-          color: isDarkMode ? theme.scaffoldBackgroundColor : Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
+        color: Colors.deepPurple[50],
         child: Form(
           key: _formKey,
           child: Column(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: Colors.grey.withOpacity(0.2),
-                      width: 1,
-                    ),
-                  ),
-                ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Column(
                   children: [
-                    Row(
-                      children: [
-                        SizedBox(
-                          width: 80,
-                          child: Text(
-                            'Đến:',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _toController,
-                            decoration: const InputDecoration(
-                              border: InputBorder.none,
-                              hintText: 'Nhập email người nhận',
-                              contentPadding: EdgeInsets.symmetric(vertical: 8),
-                            ),
-                            validator: (value) =>
-                                value == null || value.isEmpty ? 'Bắt buộc nhập email' : null,
-                          ),
-                        ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            TextButton(
-                              onPressed: () => setState(() => showCc = !showCc),
-                              child: Text(
-                                'Cc',
-                                style: TextStyle(
-                                  color: theme.primaryColor,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () => setState(() => showBcc = !showBcc),
-                              child: Text(
-                                'Bcc',
-                                style: TextStyle(
-                                  color: theme.primaryColor,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                    _buildInputRow('Đến:', _toController, 'Nhập email người nhận', validator: (value) => value == null || value.isEmpty ? 'Bắt buộc nhập email' : null),
                     if (showCc)
-                      Row(
-                        children: [
-                          SizedBox(
-                            width: 80,
-                            child: Text(
-                              'Cc:',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: TextFormField(
-                              controller: _ccController,
-                              decoration: const InputDecoration(
-                                border: InputBorder.none,
-                                hintText: 'Nhập email CC',
-                                contentPadding: EdgeInsets.symmetric(vertical: 8),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                      _buildInputRow('Cc:', _ccController, 'Nhập email CC'),
                     if (showBcc)
-                      Row(
-                        children: [
-                          SizedBox(
-                            width: 80,
-                            child: Text(
-                              'Bcc:',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: TextFormField(
-                              controller: _bccController,
-                              decoration: const InputDecoration(
-                                border: InputBorder.none,
-                                hintText: 'Nhập email BCC',
-                                contentPadding: EdgeInsets.symmetric(vertical: 8),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                      _buildInputRow('Bcc:', _bccController, 'Nhập email BCC'),
                     Row(
                       children: [
-                        SizedBox(
-                          width: 80,
-                          child: Text(
-                            'Tiêu đề:',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
                         Expanded(
-                          child: TextFormField(
-                            controller: _subjectController,
-                            decoration: const InputDecoration(
-                              border: InputBorder.none,
-                              hintText: 'Nhập tiêu đề email',
-                              contentPadding: EdgeInsets.symmetric(vertical: 8),
-                            ),
-                          ),
+                          child: _buildInputRow('Tiêu đề:', _subjectController, 'Nhập tiêu đề email'),
+                        ),
+                        TextButton(
+                          onPressed: () => setState(() => showCc = !showCc),
+                          child: Text('Cc', style: TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.w600)),
+                        ),
+                        TextButton(
+                          onPressed: () => setState(() => showBcc = !showBcc),
+                          child: Text('Bcc', style: TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.w600)),
                         ),
                       ],
                     ),
@@ -409,103 +287,49 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
                 ),
               ),
               Expanded(
-                child: TextFormField(
-                  controller: _bodyController,
-                  maxLines: null,
-                  expands: true,
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    hintText: 'Nhập nội dung email',
-                    contentPadding: EdgeInsets.all(16),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                  child: TextFormField(
+                    controller: _bodyController,
+                    maxLines: null,
+                    expands: true,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      hintText: 'Nhập nội dung email',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(18),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.all(18),
+                    ),
+                    validator: (value) => value == null || value.isEmpty ? 'Nội dung không được để trống' : null,
+                    style: const TextStyle(fontSize: 15),
                   ),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Nội dung không được để trống' : null,
                 ),
               ),
               if (attachedFiles.isNotEmpty)
                 Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      top: BorderSide(
-                        color: Colors.grey.withOpacity(0.2),
-                        width: 1,
-                      ),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        child: Text(
-                          'Tệp đính kèm:',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        height: 60,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: attachedFiles.length,
-                          itemBuilder: (context, index) {
-                            final file = attachedFiles[index];
-                            return Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 4),
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: theme.primaryColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.insert_drive_file,
-                                    size: 20,
-                                    color: theme.primaryColor,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    file.name,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: theme.primaryColor,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  IconButton(
-                                    icon: const Icon(Icons.close, size: 16),
-                                    onPressed: () {
-                                      setState(() {
-                                        attachedFiles.removeAt(index);
-                                      });
-                                    },
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: attachedFiles.map((file) => Chip(
+                      backgroundColor: Colors.deepPurple[100],
+                      label: Text(file.name, style: const TextStyle(color: Colors.deepPurple)),
+                      deleteIcon: const Icon(Icons.close, size: 18, color: Colors.deepPurple),
+                      onDeleted: () {
+                        setState(() {
+                          attachedFiles.remove(file);
+                        });
+                      },
+                      avatar: const Icon(Icons.insert_drive_file, color: Colors.deepPurple),
+                    )).toList(),
                   ),
                 ),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  border: Border(
-                    top: BorderSide(
-                      color: Colors.grey.withOpacity(0.2),
-                      width: 1,
-                    ),
-                  ),
-                ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
                   children: [
                     ElevatedButton.icon(
@@ -513,21 +337,27 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
                       icon: const Icon(Icons.attach_file),
                       label: const Text('Đính kèm tệp'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.primaryColor.withOpacity(0.1),
-                        foregroundColor: theme.primaryColor,
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.deepPurple,
                         elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    ElevatedButton.icon(
-                      onPressed: _isSending ? null : _sendEmail,
-                      icon: Icon(_isSending ? Icons.hourglass_empty : Icons.send),
-                      label: Text(_isSending ? 'Đang gửi...' : 'Gửi'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.primaryColor,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: _isSending ? null : _sendEmail,
+                        icon: Icon(_isSending ? Icons.hourglass_empty : Icons.send),
+                        label: Text(_isSending ? 'Đang gửi...' : 'Gửi'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepPurple,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                          textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
                       ),
                     ),
                   ],
@@ -536,6 +366,45 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildInputRow(String label, TextEditingController controller, String hint, {String? Function(String?)? validator}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 70,
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Colors.deepPurple,
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+              ),
+            ),
+          ),
+          Expanded(
+            child: TextFormField(
+              controller: controller,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.white,
+                hintText: hint,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+              ),
+              validator: validator,
+              style: const TextStyle(fontSize: 15),
+            ),
+          ),
+        ],
       ),
     );
   }

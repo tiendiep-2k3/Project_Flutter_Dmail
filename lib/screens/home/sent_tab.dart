@@ -34,11 +34,15 @@ class SentTab extends StatelessWidget {
     final email = FirebaseAuth.instance.currentUser!.uid;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Danh sách email đã gửi')),
+      appBar: AppBar(
+        backgroundColor: Colors.deepPurple,
+        title: const Text('Danh sách email đã gửi', style: TextStyle(color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
       body: StreamBuilder(
         stream: FirebaseFirestore.instance
             .collection('emails')
-            .where('email', isEqualTo: email)
+            .where('fromUid', isEqualTo: email)
             .where('isDraft', isEqualTo: false)
             .orderBy('timestamp', descending: true)
             .snapshots(),
@@ -55,7 +59,7 @@ class SentTab extends StatelessWidget {
             return const Center(child: Text('Không có email nào được gửi.'));
           }
 
-          final sentEmails = snapshot.data!.docs.filter((doc) {
+          final sentEmails = snapshot.data!.docs.where((doc) {
             final data = doc.data() as Map<String, dynamic>;
             if (data['folder'] == 'trash') return false;
 
@@ -98,104 +102,161 @@ class SentTab extends StatelessWidget {
           return ListView.builder(
             itemCount: sentEmails.length,
             itemBuilder: (context, index) {
-              final email = sentEmails[index];
-              final data = email.data() as Map<String, dynamic>;
+              final emailDoc = sentEmails[index];
+              final data = emailDoc.data() as Map<String, dynamic>;
 
               final subject = data['subject'] ?? '(Không có tiêu đề)';
               final body = data['body'] ?? '';
-              final docId = email.id;
+              final docId = emailDoc.id;
               final toUid = data['toUid'] as String?;
               final timestamp = (data['timestamp'] as Timestamp?)?.toDate();
               final isStarred = data['isStarred'] ?? false;
 
-              return Dismissible(
-                key: Key(docId),
-                direction: DismissDirection.startToEnd,
-                background: Container(
-                  color: Colors.red,
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: const Icon(Icons.delete, color: Colors.white),
-                ),
-                confirmDismiss: (_) async {
-                  return await showDialog<bool>(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Xóa email'),
-                      content: const Text('Bạn có chắc chắn muốn xóa email này không?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Hủy'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: const Text('Ok'),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-                onDismissed: (_) async {
-                  try {
-                    await deleteEmail(docId);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Email đã được chuyển vào thùng rác')),
-                    );
-                  } catch (err) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Lỗi: ${err.toString()}')),
-                    );
-                  }
-                },
-                child: ListTile(
-                  title: Text(
-                    subject,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.normal,
-                      color: Colors.blue,
-                    ),
+              String formattedTime = '';
+              if (timestamp != null) {
+                final now = DateTime.now();
+                if (now.difference(timestamp).inDays == 0) {
+                  formattedTime = '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
+                } else {
+                  formattedTime = '${timestamp.day.toString().padLeft(2, '0')}/${timestamp.month.toString().padLeft(2, '0')}';
+                }
+              }
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                child: Dismissible(
+                  key: Key(docId),
+                  direction: DismissDirection.startToEnd,
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: const Icon(Icons.delete, color: Colors.white),
                   ),
-                  subtitle: FutureBuilder<String>(
-                    future: getEmailFromUid(toUid ?? ''),
-                    builder: (context, snapshot) {
-                      final recipient = snapshot.connectionState == ConnectionState.done
-                          ? snapshot.data ?? 'Không rõ ràng'
-                          : 'Đang tải...';
-                      final displayText = body.isNotEmpty ? '$recipient: $body' : recipient;
-                      return Text(
-                        displayText,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.normal,
-                          color: Colors.black54,
-                        ),
-                      );
-                    },
-                  ),
-                  leading: Icon(
-                    isStarred ? Icons.star : Icons.send,
-                    color: isStarred ? Colors.yellow : null,
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => EmailDetailScreen(
-                          subject: subject,
-                          body: body,
-                          fromUid: email,
-                          toUid: toUid,
-                          ccUids: List<String>.from(data['ccUids'] ?? []),
-                          bccUids: List<String>.from(data['bccUids'] ?? []),
-                          timestamp: timestamp,
-                          docId: docId,
-                          labelName: 'Đã gửi',
-                        ),
+                  confirmDismiss: (_) async {
+                    return await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Xóa email'),
+                        content: const Text('Bạn có chắc chắn muốn xóa email này không?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('Hủy'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: const Text('Ok'),
+                          ),
+                        ],
                       ),
                     );
                   },
+                  onDismissed: (_) async {
+                    try {
+                      await deleteEmail(docId);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Email đã được chuyển vào thùng rác')),
+                      );
+                    } catch (err) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Lỗi: ${err.toString()}')),
+                      );
+                    }
+                  },
+                  child: Card(
+                    elevation: 2,
+                    color: Colors.deepPurple[50],
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => EmailDetailScreen(
+                              subject: subject,
+                              body: body,
+                              fromUid: data['fromUid'],
+                              toUid: toUid,
+                              ccUids: List<String>.from(data['ccUids'] ?? []),
+                              bccUids: List<String>.from(data['bccUids'] ?? []),
+                              timestamp: timestamp,
+                              docId: docId,
+                              labelName: 'Đã gửi',
+                            ),
+                          ),
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: Colors.deepPurple[100],
+                              child: Icon(
+                                isStarred ? Icons.star : Icons.send,
+                                color: isStarred ? Colors.amber : Colors.deepPurple,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          subject,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                            color: Colors.black,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      if (formattedTime.isNotEmpty)
+                                        Text(
+                                          formattedTime,
+                                          style: const TextStyle(
+                                            color: Colors.grey,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  FutureBuilder<String>(
+                                    future: getEmailFromUid(toUid ?? ''),
+                                    builder: (context, snapshot) {
+                                      final recipient = snapshot.connectionState == ConnectionState.done
+                                          ? snapshot.data ?? 'Không rõ ràng'
+                                          : 'Đang tải...';
+                                      final displayText = body.isNotEmpty ? '$recipient: $body' : recipient;
+                                      return Text(
+                                        displayText,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: Colors.black87,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.normal,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               );
             },

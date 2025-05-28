@@ -16,12 +16,19 @@ class _LoginScreenState extends State<LoginScreen> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _isObscure = true;
 
   Future<void> _verifyPasswordAndSendOTP() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
-    final phone = '+84${_phoneController.text.trim()}';
+
+    // Xử lý số điện thoại: loại bỏ số 0 đầu nếu có
+    String input = _phoneController.text.trim();
+    if (input.startsWith('0')) {
+      input = input.substring(1);
+    }
+    final phone = '+84$input';
     final enteredPassword = _passwordController.text.trim();
 
     try {
@@ -86,70 +93,151 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Đăng nhập')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              const Text('Nhập thông tin để đăng nhập:', style: TextStyle(fontSize: 16)),
-              const SizedBox(height: 12),
-
-              TextFormField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  prefixText: '+84 ',
-                  labelText: 'Số điện thoại',
-                  border: OutlineInputBorder(),
+      backgroundColor: const Color(0xFFF6F7FB),
+      appBar: AppBar(
+        title: const Text('Đăng nhập'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: Colors.deepPurple,
+      ),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(
+                  'assets/images/Dmail_logo.png',
+                  height: 160,
+                  width: 160,
+                  fit: BoxFit.contain,
                 ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Vui lòng nhập số điện thoại';
-                  } else if (!RegExp(r'^[0-9]{9,10}$').hasMatch(value)) {
-                    return 'Số điện thoại không hợp lệ';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-
-              TextFormField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Mật khẩu',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 24),
+                // Số điện thoại
+                TextFormField(
+                  controller: _phoneController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.phone, color: Colors.deepPurple),
+                    prefixText: '+84 ',
+                    labelText: 'Số điện thoại',
+                    labelStyle: const TextStyle(color: Colors.deepPurple),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: Colors.deepPurple),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: Colors.deepPurple),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                  style: const TextStyle(color: Colors.deepPurple),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Vui lòng nhập số điện thoại';
+                    } else if (!RegExp(r'^[1-9][0-9]{8,9}$').hasMatch(value)) {
+                      return 'Số điện thoại không hợp lệ';
+                    }
+                    return null;
+                  },
                 ),
-                validator: (value) {
-                  if (value == null || value.length < 6) {
-                    return 'Mật khẩu phải có ít nhất 6 ký tự';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
-
-              ElevatedButton(
-                onPressed: _isLoading ? null : _verifyPasswordAndSendOTP,
-                child: _isLoading
-                    ? const CircularProgressIndicator()
-                    : const Text('Gửi mã OTP'),
-              ),
-              const SizedBox(height: 12),
-
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
-                  );
-                },
-                child: const Text('Quên mật khẩu?'),
-              ),
-            ],
+                const SizedBox(height: 16),
+                // Mật khẩu
+                TextFormField(
+                  controller: _passwordController,
+                  obscureText: _isObscure,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.lock, color: Colors.deepPurple),
+                    labelText: 'Mật khẩu',
+                    labelStyle: const TextStyle(color: Colors.deepPurple),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: Colors.deepPurple),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: Colors.deepPurple),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isObscure ? Icons.visibility_off : Icons.visibility,
+                        color: Colors.deepPurple,
+                      ),
+                      onPressed: () => setState(() => _isObscure = !_isObscure),
+                    ),
+                  ),
+                  style: const TextStyle(color: Colors.deepPurple),
+                  validator: (value) {
+                    if (value == null || value.length < 6) {
+                      return 'Mật khẩu phải có ít nhất 6 ký tự';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 24),
+                // Nút đăng nhập
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.login, color: Colors.deepPurple),
+                    label: _isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.deepPurple),
+                          )
+                        : const Text(
+                            'Đăng nhập',
+                            style: TextStyle(
+                              color: Colors.deepPurple,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      side: const BorderSide(color: Colors.deepPurple, width: 2),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.deepPurple,
+                      elevation: 0,
+                    ),
+                    onPressed: _isLoading ? null : _verifyPasswordAndSendOTP,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Quên mật khẩu
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+                    );
+                  },
+                  child: const Text(
+                    'Quên mật khẩu?',
+                    style: TextStyle(color: Colors.deepPurple),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

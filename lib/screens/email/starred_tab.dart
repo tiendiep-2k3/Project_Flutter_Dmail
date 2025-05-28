@@ -22,7 +22,11 @@ class StarredTab extends StatelessWidget {
     final currentUid = user.uid;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Được gắn sao')),
+      appBar: AppBar(
+        backgroundColor: Colors.deepPurple,
+        title: const Text('Được gắn sao', style: TextStyle(color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('emails')
@@ -87,43 +91,122 @@ class StarredTab extends StatelessWidget {
               final docId = starredEmails[index].id;
               final fromUid = email['fromUid'] as String?;
               final timestamp = (email['timestamp'] as Timestamp?)?.toDate();
+              final isRead = email['isRead'] ?? false;
 
-              // Kiểm tra fromUid trước khi điều hướng
+              String formattedTime = '';
+              if (timestamp != null) {
+                final now = DateTime.now();
+                if (now.difference(timestamp).inDays == 0) {
+                  formattedTime = '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
+                } else {
+                  formattedTime = '${timestamp.day.toString().padLeft(2, '0')}/${timestamp.month.toString().padLeft(2, '0')}';
+                }
+              }
+
               if (fromUid == null) {
-                return ListTile(
-                  title: Text(subject),
-                  subtitle: const Text('Lỗi: Không xác định người gửi'),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  child: Card(
+                    color: Colors.deepPurple[50],
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    child: ListTile(
+                      leading: const Icon(Icons.star, color: Colors.amber),
+                      title: Text(subject),
+                      subtitle: const Text('Lỗi: Không xác định người gửi'),
+                    ),
+                  ),
                 );
               }
 
-              return ListTile(
-                title: Text(subject),
-                subtitle: Text(body, maxLines: 2, overflow: TextOverflow.ellipsis),
-                leading: const Icon(Icons.star, color: Colors.amber),
-                onTap: () {
-                  try {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => EmailDetailScreen(
-                          subject: subject,
-                          body: body,
-                          fromUid: fromUid,
-                          toUid: email['toUid'] as String?,
-                          ccUids: List<String>.from(email['ccUids'] ?? []),
-                          bccUids: List<String>.from(email['bccUids'] ?? []),
-                          timestamp: timestamp,
-                          docId: docId,
-                          labelName: 'Được gắn sao',
-                        ),
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                child: Card(
+                  elevation: isRead ? 1 : 4,
+                  color: isRead ? Colors.white : Colors.deepPurple[50],
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: () {
+                      try {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => EmailDetailScreen(
+                              subject: subject,
+                              body: body,
+                              fromUid: fromUid,
+                              toUid: email['toUid'] as String?,
+                              ccUids: List<String>.from(email['ccUids'] ?? []),
+                              bccUids: List<String>.from(email['bccUids'] ?? []),
+                              timestamp: timestamp,
+                              docId: docId,
+                              labelName: 'Được gắn sao',
+                            ),
+                          ),
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Lỗi điều hướng đến chi tiết email: ${e.toString()}')),
+                        );
+                      }
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const CircleAvatar(
+                            backgroundColor: Color(0xFFFFF8E1),
+                            child: Icon(Icons.star, color: Colors.amber),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        subject,
+                                        style: TextStyle(
+                                          fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
+                                          fontSize: 16,
+                                          color: isRead ? Colors.black54 : Colors.black,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    if (formattedTime.isNotEmpty)
+                                      Text(
+                                        formattedTime,
+                                        style: const TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  body,
+                                  style: TextStyle(
+                                    color: isRead ? Colors.black54 : Colors.black87,
+                                    fontSize: 14,
+                                    fontWeight: isRead ? FontWeight.normal : FontWeight.w500,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    );
-                  } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Lỗi điều hướng đến chi tiết email: ${e.toString()}')),
-                    );
-                  }
-                },
+                    ),
+                  ),
+                ),
               );
             },
           );

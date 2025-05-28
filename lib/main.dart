@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.indigo,
       ),
-      home: const SplashScreen(), // 👈 Splash là màn hình đầu tiên
+      home: const SplashScreen(), 
     );
   }
 }

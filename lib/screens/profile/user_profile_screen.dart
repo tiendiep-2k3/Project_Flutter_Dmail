@@ -24,7 +24,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Thông tin người dùng')),
+      appBar: AppBar(
+        backgroundColor: Colors.deepPurple,
+        title: const Text('Thông tin người dùng', style: TextStyle(color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
       body: FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
         future: _userFuture,
         builder: (context, snapshot) {
@@ -41,24 +45,51 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           final phone = data['phone'] ?? 'Không có số điện thoại';
           final photoUrl = data['photoUrl'];
 
-          return Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Center(
-                  child: CircleAvatar(
-                    radius: 50,
+          return Center(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.deepPurple.withOpacity(0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  CircleAvatar(
+                    radius: 54,
+                    backgroundColor: Colors.deepPurple[100],
                     backgroundImage: photoUrl != null && photoUrl != ''
                         ? NetworkImage(photoUrl)
                         : const AssetImage('assets/images/default_avatar.png') as ImageProvider,
                   ),
-                ),
-                const SizedBox(height: 24),
-                Text('👤 Họ tên: $displayName', style: const TextStyle(fontSize: 18)),
-                const SizedBox(height: 12),
-                Text('📱 Số điện thoại: $phone', style: const TextStyle(fontSize: 16)),
-              ],
+                  const SizedBox(height: 24),
+                  Text(
+                    displayName,
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.deepPurple),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.phone, color: Colors.deepPurple, size: 20),
+                      const SizedBox(width: 6),
+                      Text(
+                        phone,
+                        style: const TextStyle(fontSize: 16, color: Colors.black87),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           );
         },

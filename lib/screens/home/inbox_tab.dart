@@ -180,85 +180,142 @@ class _InboxTabState extends State<InboxTab> {
                 final isRead = data['isRead'] ?? false;
                 final isStarred = data['isStarred'] ?? false;
 
-                return Dismissible(
-                  key: Key(docId),
-                  direction: DismissDirection.endToStart,
-                  background: Container(
-                    color: Colors.red,
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: const Icon(Icons.delete, color: Colors.white),
-                  ),
-                  confirmDismiss: (_) async {
-                    return await showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Xóa email'),
-                        content: const Text('Bạn có chắc muốn xóa email này?'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, false),
-                            child: const Text('Hủy'),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, true),
-                            child: const Text('Xóa'),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                  onDismissed: (_) async {
-                    try {
-                      await deleteEmail(docId);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Email đã được chuyển vào thùng rác')),
-                      );
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Lỗi: $e')),
-                      );
-                    }
-                  },
-                  child: ListTile(
-                    title: Text(
-                      subject,
-                      style: TextStyle(
-                        fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
-                        color: isRead ? Colors.black54 : Colors.black,
-                      ),
+                String formattedTime = '';
+                if (timestamp != null) {
+                  final now = DateTime.now();
+                  if (now.difference(timestamp).inDays == 0) {
+                    formattedTime = '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
+                  } else {
+                    formattedTime = '${timestamp.day.toString().padLeft(2, '0')}/${timestamp.month.toString().padLeft(2, '0')}';
+                  }
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  child: Dismissible(
+                    key: Key(docId),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      color: Colors.red,
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: const Icon(Icons.delete, color: Colors.white),
                     ),
-                    subtitle: Text(
-                      body,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
-                        color: isRead ? Colors.black54 : Colors.black,
-                      ),
-                    ),
-                    leading: Icon(
-                      isStarred ? Icons.star : Icons.email,
-                      color: isStarred ? Colors.amber : null,
-                    ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => EmailDetailScreen(
-                            subject: subject,
-                            body: body,
-                            fromUid: fromUid,
-                            toUid: data['toUid'],
-                            ccUids: List<String>.from(data['ccUids'] ?? []),
-                            bccUids: List<String>.from(data['bccUids'] ?? []),
-                            timestamp: timestamp,
-                            docId: docId,
-                            labelName: 'Hộp thư đến',
-                          ),
+                    confirmDismiss: (_) async {
+                      return await showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Xóa email'),
+                          content: const Text('Bạn có chắc muốn xóa email này?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Hủy'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text('Xóa'),
+                            ),
+                          ],
                         ),
                       );
                     },
+                    onDismissed: (_) async {
+                      try {
+                        await deleteEmail(docId);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Email đã được chuyển vào thùng rác')),
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Lỗi: $e')),
+                        );
+                      }
+                    },
+                    child: Card(
+                      elevation: isRead ? 1 : 4,
+                      color: isRead ? Colors.white : Colors.deepPurple[50],
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => EmailDetailScreen(
+                                subject: subject,
+                                body: body,
+                                fromUid: fromUid,
+                                toUid: data['toUid'],
+                                ccUids: List<String>.from(data['ccUids'] ?? []),
+                                bccUids: List<String>.from(data['bccUids'] ?? []),
+                                timestamp: timestamp,
+                                docId: docId,
+                                labelName: 'Hộp thư đến',
+                              ),
+                            ),
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              CircleAvatar(
+                                backgroundColor: Colors.deepPurple[100],
+                                child: Icon(
+                                  isStarred ? Icons.star : Icons.email,
+                                  color: isStarred ? Colors.amber : Colors.deepPurple,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            subject,
+                                            style: TextStyle(
+                                              fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
+                                              fontSize: 16,
+                                              color: isRead ? Colors.black54 : Colors.black,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        if (formattedTime.isNotEmpty)
+                                          Text(
+                                            formattedTime,
+                                            style: const TextStyle(
+                                              color: Colors.grey,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      body,
+                                      style: TextStyle(
+                                        color: isRead ? Colors.black54 : Colors.black87,
+                                        fontSize: 14,
+                                        fontWeight: isRead ? FontWeight.normal : FontWeight.w500,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 );
               },

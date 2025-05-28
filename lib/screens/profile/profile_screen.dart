@@ -105,7 +105,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Hồ sơ cá nhân')),
+      appBar: AppBar(
+        backgroundColor: Colors.deepPurple,
+        title: const Text('Hồ sơ cá nhân', style: TextStyle(color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -114,54 +118,112 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 key: _formKey,
                 child: Column(
                   children: [
-                    GestureDetector(
-                      onTap: _showAvatarSelection,
-                      child: CircleAvatar(
-                        radius: 50,
-                        backgroundImage: _photoUrl != null && _photoUrl!.isNotEmpty
-                            ? AssetImage(_photoUrl!)
-                            : const AssetImage('assets/images/avatar1.webp'),
-                      ),
+                    Stack(
+                      alignment: Alignment.bottomRight,
+                      children: [
+                        CircleAvatar(
+                          radius: 54,
+                          backgroundColor: Colors.deepPurple[100],
+                          backgroundImage: _photoUrl != null && _photoUrl!.isNotEmpty
+                              ? AssetImage(_photoUrl!)
+                              : const AssetImage('assets/images/avatar1.webp') as ImageProvider,
+                        ),
+                        Positioned(
+                          bottom: 4,
+                          right: 4,
+                          child: Material(
+                            color: Colors.deepPurple,
+                            shape: const CircleBorder(),
+                            child: InkWell(
+                              customBorder: const CircleBorder(),
+                              onTap: _showAvatarSelection,
+                              child: const Padding(
+                                padding: EdgeInsets.all(8),
+                                child: Icon(Icons.edit, color: Colors.white, size: 22),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 18),
                     Text(_phone ?? '', style: const TextStyle(color: Colors.grey)),
-                    const SizedBox(height: 16),
-
+                    const SizedBox(height: 18),
                     TextFormField(
                       controller: _displayNameController,
-                      decoration: const InputDecoration(labelText: 'Tên hiển thị'),
+                      decoration: InputDecoration(
+                        labelText: 'Tên hiển thị',
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 12),
-
+                    const SizedBox(height: 14),
                     TextFormField(
                       controller: _emailController,
-                      decoration: const InputDecoration(labelText: 'Email'),
+                      decoration: InputDecoration(
+                        labelText: 'Email',
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
                       keyboardType: TextInputType.emailAddress,
                     ),
-                    const SizedBox(height: 12),
-
+                    const SizedBox(height: 14),
                     TextFormField(
                       controller: _bioController,
-                      decoration: const InputDecoration(labelText: 'Bio'),
+                      decoration: InputDecoration(
+                        labelText: 'Bio',
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
                       maxLines: 2,
                     ),
-                    const SizedBox(height: 12),
-
+                    const SizedBox(height: 14),
                     SwitchListTile(
                       title: const Text('Thông báo'),
                       value: _notificationsEnabled,
                       onChanged: (val) => setState(() => _notificationsEnabled = val),
+                      activeColor: Colors.deepPurple,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      tileColor: Colors.deepPurple[50],
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                     ),
+                    const SizedBox(height: 6),
                     SwitchListTile(
                       title: const Text('Chế độ tối'),
                       value: _darkMode,
                       onChanged: (val) => setState(() => _darkMode = val),
+                      activeColor: Colors.deepPurple,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      tileColor: Colors.deepPurple[50],
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                     ),
-                    const SizedBox(height: 20),
-
-                    ElevatedButton(
-                      onPressed: _saveChanges,
-                      child: const Text('Lưu thay đổi'),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _saveChanges,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepPurple,
+                          foregroundColor: Colors.white,
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        child: const Text('Lưu thay đổi'),
+                      ),
                     ),
                   ],
                 ),

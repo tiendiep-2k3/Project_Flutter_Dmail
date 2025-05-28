@@ -336,12 +336,14 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Nhãn: ${widget.labelName}'),
+        backgroundColor: Colors.deepPurple,
+        title: Text('Nhãn: ${widget.labelName}', style: const TextStyle(color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
             icon: Icon(
               isRead ? Icons.mark_email_read : Icons.mark_email_unread,
-              color: isRead ? Colors.black54 : Colors.black,
+              color: Colors.white,
             ),
             onPressed: isLoading ? null : _toggleReadStatus,
             tooltip: isRead ? 'Đánh dấu là chưa đọc' : 'Đánh dấu là đã đọc',
@@ -349,153 +351,209 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
           IconButton(
             icon: Icon(
               isStarred ? Icons.star : Icons.star_border,
-              color: isStarred ? Colors.amber : Colors.black,
+              color: isStarred ? Colors.amber : Colors.white,
             ),
             onPressed: isLoading ? null : _toggleStarStatus,
             tooltip: isStarred ? 'Bỏ gắn sao' : 'Gắn sao',
           ),
           IconButton(
-            icon: const Icon(Icons.label),
+            icon: const Icon(Icons.label, color: Colors.white),
             onPressed: _showLabelDialog,
             tooltip: 'Gán nhãn',
           ),
           IconButton(
-            icon: const Icon(Icons.delete),
+            icon: const Icon(Icons.delete, color: Colors.white),
             onPressed: _moveToTrash,
             tooltip: 'Chuyển vào thùng rác',
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 8),
-            if (fromEmail != null)
-              Text.rich(TextSpan(
-                children: [
-                  const TextSpan(text: "From: ", style: TextStyle(fontWeight: FontWeight.bold)),
-                  TextSpan(text: fromEmail!),
-                ],
-              )),
-            if (toEmail != null)
-              Text.rich(TextSpan(
-                children: [
-                  const TextSpan(text: "To: ", style: TextStyle(fontWeight: FontWeight.bold)),
-                  TextSpan(text: toEmail!),
-                ],
-              )),
-            if (ccEmails.isNotEmpty && !isBccUser)
-              Text.rich(TextSpan(
-                children: [
-                  const TextSpan(text: "Cc: ", style: TextStyle(fontWeight: FontWeight.bold)),
-                  TextSpan(text: ccEmails.join(', ')),
-                ],
-              )),
-            const SizedBox(height: 4),
-            Text("Date: $timeStr"),
-            const Divider(height: 24),
-            Text(widget.subject,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            Text(widget.body, style: const TextStyle(fontSize: 16)),
-            const SizedBox(height: 16),
-            if (emailLabels.isNotEmpty) ...[
-              const Text("Nhãn:", style: TextStyle(fontWeight: FontWeight.bold)),
-              StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                stream: FirebaseFirestore.instance.collection('labels').doc(currentUid).snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData || snapshot.hasError) return const SizedBox.shrink();
-                  final data = snapshot.data!.data();
-                  final labels = List<Map<String, dynamic>>.from(data?['labels'] ?? []);
-                  return Wrap(
-                    children: emailLabels.map((labelId) {
-                      final label = labels.firstWhere(
-                        (l) => l['id'] == labelId,
-                        orElse: () => {'name': 'Không xác định', 'id': ''},
-                      );
-                      return Chip(
-                        label: Text(label['name']?.toString() ?? ''),
-                        onDeleted: () {
-                          final updatedLabels = List<String>.from(emailLabels);
-                          updatedLabels.remove(labelId);
-                          _updateLabels(updatedLabels);
-                        },
-                      );
-                    }).toList(),
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
-            ],
-            if (widget.attachments != null && widget.attachments!.isNotEmpty) ...[
-              const Text("Tệp đính kèm:", style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Column(
-                children: widget.attachments!.map((attachment) {
-                  final fileName = attachment['fileName'] ?? 'Tệp';
-                  final fileUrl = attachment['fileUrl'];
-                  return ListTile(
-                    title: Text(fileName),
-                    trailing: const Icon(Icons.download),
-                    onTap: () async {
-                      final uri = Uri.parse(fileUrl);
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri, mode: LaunchMode.externalApplication);
-                      }
-                    },
-                  );
-                }).toList(),
-              ),
-            ],
-            const Spacer(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.reply),
-                  label: const Text('Trả lời'),
-                  onPressed: fromEmail == null
-                      ? null
-                      : () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ComposeEmailScreen(
-                                toEmail: fromEmail,
-                                subject: 'Re: ${widget.subject}',
-                              ),
-                            ),
-                          );
-                        },
+      body: Container(
+        color: Colors.deepPurple[50],
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.deepPurple.withOpacity(0.08),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.forward),
-                  label: const Text('Chuyển tiếp'),
-                  onPressed: () {
-                    final quotedBody = '''
-                    ---------- Forwarded message ----------
-                    From: ${fromEmail ?? 'Không rõ'}
-                    Date: $timeStr
-                    Subject: ${widget.subject}
-                    ${widget.body}
-                    ''';
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ComposeEmailScreen(
-                          subject: 'Fwd: ${widget.subject}',
-                          body: quotedBody,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          backgroundColor: Colors.deepPurple[100],
+                          child: const Icon(Icons.person, color: Colors.deepPurple),
                         ),
-                      ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (fromEmail != null)
+                                Text(
+                                  fromEmail!,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                ),
+                              if (toEmail != null)
+                                Text(
+                                  'Đến: $toEmail',
+                                  style: const TextStyle(color: Colors.black54, fontSize: 13),
+                                ),
+                              if (ccEmails.isNotEmpty && !isBccUser)
+                                Text(
+                                  'Cc: ${ccEmails.join(', ')}',
+                                  style: const TextStyle(color: Colors.black54, fontSize: 13),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          timeStr,
+                          style: const TextStyle(color: Colors.grey, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      widget.subject,
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 10),
+                    Divider(color: Colors.deepPurple[100], thickness: 1),
+                    const SizedBox(height: 6),
+                    Text(
+                      widget.body,
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+              if (emailLabels.isNotEmpty) ...[
+                const Text("Nhãn:", style: TextStyle(fontWeight: FontWeight.bold)),
+                StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                  stream: FirebaseFirestore.instance.collection('labels').doc(currentUid).snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData || snapshot.hasError) return const SizedBox.shrink();
+                    final data = snapshot.data!.data();
+                    final labels = List<Map<String, dynamic>>.from(data?['labels'] ?? []);
+                    return Wrap(
+                      spacing: 8,
+                      children: emailLabels.map((labelId) {
+                        final label = labels.firstWhere(
+                          (l) => l['id'] == labelId,
+                          orElse: () => {'name': 'Không xác định', 'id': ''},
+                        );
+                        return Chip(
+                          label: Text(label['name']?.toString() ?? ''),
+                          backgroundColor: Colors.deepPurple[100],
+                          onDeleted: () {
+                            final updatedLabels = List<String>.from(emailLabels);
+                            updatedLabels.remove(labelId);
+                            _updateLabels(updatedLabels);
+                          },
+                        );
+                      }).toList(),
                     );
                   },
                 ),
+                const SizedBox(height: 16),
               ],
-            ),
-          ],
+              if (widget.attachments != null && widget.attachments!.isNotEmpty) ...[
+                const Text("Tệp đính kèm:", style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: widget.attachments!.map((attachment) {
+                    final fileName = attachment['fileName'] ?? 'Tệp';
+                    final fileUrl = attachment['fileUrl'];
+                    return ActionChip(
+                      avatar: const Icon(Icons.attach_file, color: Colors.deepPurple),
+                      label: Text(fileName, style: const TextStyle(color: Colors.deepPurple)),
+                      backgroundColor: Colors.deepPurple[50],
+                      onPressed: () async {
+                        final uri = Uri.parse(fileUrl);
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        }
+                      },
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+              ],
+              const Spacer(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.reply),
+                    label: const Text('Trả lời'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurple,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    onPressed: fromEmail == null
+                        ? null
+                        : () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ComposeEmailScreen(
+                                  toEmail: fromEmail,
+                                  subject: 'Re: ${widget.subject}',
+                                ),
+                              ),
+                            );
+                          },
+                  ),
+                  const SizedBox(width: 16),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.forward),
+                    label: const Text('Chuyển tiếp'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.deepPurple,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      side: const BorderSide(color: Colors.deepPurple, width: 1.2),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    onPressed: () {
+                      final quotedBody = '''\n---------- Forwarded message ----------\nFrom: ${fromEmail ?? 'Không rõ'}\nDate: $timeStr\nSubject: ${widget.subject}\n${widget.body}\n''';
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ComposeEmailScreen(
+                            subject: 'Fwd: ${widget.subject}',
+                            body: quotedBody,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -11,7 +11,11 @@ class DraftTab extends StatelessWidget {
     final currentUid = FirebaseAuth.instance.currentUser!.uid;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Bản nháp")),
+      appBar: AppBar(
+        backgroundColor: Colors.deepPurple,
+        title: const Text("Bản nháp", style: TextStyle(color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('emails')
@@ -38,24 +42,95 @@ class DraftTab extends StatelessWidget {
               final fromUid = draft['fromUid'] ?? 'Không rõ';
               final timestamp = (draft['timestamp'] as Timestamp?)?.toDate();
 
-              return ListTile(
-                title: Text(subject),
-                subtitle: Text(body, maxLines: 2, overflow: TextOverflow.ellipsis),
-                trailing: const Icon(Icons.drafts),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => EmailDetailScreen(
-                        subject: subject,
-                        body: body,
-                        fromUid: fromUid,
-                        timestamp: timestamp,
-                        labelName: 'Bản nháp',
+              String formattedTime = '';
+              if (timestamp != null) {
+                final now = DateTime.now();
+                if (now.difference(timestamp).inDays == 0) {
+                  formattedTime = '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
+                } else {
+                  formattedTime = '${timestamp.day.toString().padLeft(2, '0')}/${timestamp.month.toString().padLeft(2, '0')}';
+                }
+              }
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                child: Card(
+                  elevation: 2,
+                  color: Colors.deepPurple[50],
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => EmailDetailScreen(
+                            subject: subject,
+                            body: body,
+                            fromUid: fromUid,
+                            timestamp: timestamp,
+                            labelName: 'Bản nháp',
+                          ),
+                        ),
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const CircleAvatar(
+                            backgroundColor: Color(0xFFE1BEE7),
+                            child: Icon(Icons.drafts, color: Colors.deepPurple),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        subject,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          color: Colors.black,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    if (formattedTime.isNotEmpty)
+                                      Text(
+                                        formattedTime,
+                                        style: const TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  body,
+                                  style: const TextStyle(
+                                    color: Colors.black87,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.normal,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  );
-                },
+                  ),
+                ),
               );
             },
           );

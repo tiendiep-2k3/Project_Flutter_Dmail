@@ -11,7 +11,11 @@ class TrashTab extends StatelessWidget {
     final uid = FirebaseAuth.instance.currentUser!.uid;
 
     return Scaffold(
-      appBar: AppBar(title: Text('Thùng rác')),
+      appBar: AppBar(
+        backgroundColor: Colors.deepPurple,
+        title: const Text('Thùng rác', style: TextStyle(color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('emails')
@@ -28,7 +32,6 @@ class TrashTab extends StatelessWidget {
             return const Center(child: Text('Không có dữ liệu.'));
           }
 
-          // Lọc lại các email mà user là toUid, ccUids hoặc bccUids
           final allEmails = snapshot.data!.docs;
           final emails = allEmails.where((doc) {
             final data = doc.data() as Map<String, dynamic>;
@@ -44,29 +47,104 @@ class TrashTab extends StatelessWidget {
             itemCount: emails.length,
             itemBuilder: (context, index) {
               final email = emails[index].data() as Map<String, dynamic>;
+              final subject = email['subject'] ?? '(Không tiêu đề)';
+              final body = email['body'] ?? '';
+              final timestamp = (email['timestamp'] as Timestamp?)?.toDate();
 
-              return ListTile(
-                title: Text(email['subject'] ?? ''),
-                subtitle: Text(email['body'] ?? ''),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => EmailDetailScreen(
-                        subject: email['subject'],
-                        body: email['body'],
-                        fromUid: email['fromUid'],
-                        toUid: email['toUid'],
-                        ccUids: List<String>.from(email['ccUids'] ?? []),
-                        bccUids: List<String>.from(email['bccUids'] ?? []),
-                        timestamp: (email['timestamp'] as Timestamp?)?.toDate(),
-                        attachments: email['attachments'],
-                        docId: emails[index].id,
-                        labelName: 'Thùng rác',
+              String formattedTime = '';
+              if (timestamp != null) {
+                final now = DateTime.now();
+                if (now.difference(timestamp).inDays == 0) {
+                  formattedTime = '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
+                } else {
+                  formattedTime = '${timestamp.day.toString().padLeft(2, '0')}/${timestamp.month.toString().padLeft(2, '0')}';
+                }
+              }
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                child: Card(
+                  elevation: 2,
+                  color: Colors.deepPurple[50],
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => EmailDetailScreen(
+                            subject: email['subject'],
+                            body: email['body'],
+                            fromUid: email['fromUid'],
+                            toUid: email['toUid'],
+                            ccUids: List<String>.from(email['ccUids'] ?? []),
+                            bccUids: List<String>.from(email['bccUids'] ?? []),
+                            timestamp: (email['timestamp'] as Timestamp?)?.toDate(),
+                            attachments: email['attachments'],
+                            docId: emails[index].id,
+                            labelName: 'Thùng rác',
+                          ),
+                        ),
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const CircleAvatar(
+                            backgroundColor: Color(0xFFFFCDD2),
+                            child: Icon(Icons.delete, color: Colors.red),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        subject,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          color: Colors.black,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    if (formattedTime.isNotEmpty)
+                                      Text(
+                                        formattedTime,
+                                        style: const TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  body,
+                                  style: const TextStyle(
+                                    color: Colors.black87,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.normal,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  );
-                },
+                  ),
+                ),
               );
             },
           );

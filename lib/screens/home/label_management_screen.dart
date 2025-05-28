@@ -177,16 +177,30 @@ class _LabelManagementScreenState extends State<LabelManagementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Quản lý nhãn')),
+      appBar: AppBar(
+        backgroundColor: Colors.deepPurple,
+        title: const Text('Quản lý nhãn', style: TextStyle(color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             TextField(
               controller: _labelController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Thêm nhãn mới',
-                border: OutlineInputBorder(),
+                labelStyle: const TextStyle(color: Colors.deepPurple),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.add, color: Colors.deepPurple),
+                  onPressed: _addLabel,
+                ),
               ),
               onSubmitted: (_) => _addLabel(),
             ),
@@ -217,61 +231,78 @@ class _LabelManagementScreenState extends State<LabelManagementScreen> {
                     return const Center(child: Text('Chưa có nhãn nào.'));
                   }
 
-                  return ListView.builder(
+                  return ListView.separated(
                     itemCount: labels.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
                       final label = labels[index];
                       final labelColor = Color(label['color'] ?? Colors.blue.value);
-                      return ListTile(
-                        leading: Icon(Icons.label, color: labelColor),
-                        title: Text(label['name'] ?? 'Nhãn không xác định'),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => LabelTab(labelId: label['id'], labelName: label['name']),
-                            ),
-                          );
-                        },
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.edit),
-                              onPressed: () async {
-                                final newName = await showDialog<String>(
-                                  context: context,
-                                  builder: (context) {
-                                    final controller = TextEditingController(text: label['name']);
-                                    return AlertDialog(
-                                      title: const Text('Đổi tên nhãn'),
-                                      content: TextField(
-                                        controller: controller,
-                                        decoration: const InputDecoration(hintText: 'Nhập tên mới'),
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () => Navigator.pop(context),
-                                          child: const Text('Hủy'),
-                                        ),
-                                        TextButton(
-                                          onPressed: () => Navigator.pop(context, controller.text),
-                                          child: const Text('Lưu'),
-                                        ),
-                                      ],
+                      return Material(
+                        color: Colors.deepPurple[50],
+                        borderRadius: BorderRadius.circular(16),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => LabelTab(labelId: label['id'], labelName: label['name']),
+                              ),
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  backgroundColor: labelColor.withOpacity(0.15),
+                                  child: Icon(Icons.label, color: labelColor),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Text(
+                                    label['name'] ?? 'Nhãn không xác định',
+                                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.edit, color: Colors.deepPurple),
+                                  onPressed: () async {
+                                    final newName = await showDialog<String>(
+                                      context: context,
+                                      builder: (context) {
+                                        final controller = TextEditingController(text: label['name']);
+                                        return AlertDialog(
+                                          title: const Text('Đổi tên nhãn'),
+                                          content: TextField(
+                                            controller: controller,
+                                            decoration: const InputDecoration(hintText: 'Nhập tên mới'),
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(context),
+                                              child: const Text('Hủy'),
+                                            ),
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(context, controller.text),
+                                              child: const Text('Lưu'),
+                                            ),
+                                          ],
+                                        );
+                                      },
                                     );
+                                    if (newName != null && newName.trim().isNotEmpty) {
+                                      _renameLabel(label['id'], newName);
+                                    }
                                   },
-                                );
-                                if (newName != null && newName.trim().isNotEmpty) {
-                                  _renameLabel(label['id'], newName);
-                                }
-                              },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () => _deleteLabel(label['id']),
+                                ),
+                              ],
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.delete),
-                              onPressed: () => _deleteLabel(label['id']),
-                            ),
-                          ],
+                          ),
                         ),
                       );
                     },

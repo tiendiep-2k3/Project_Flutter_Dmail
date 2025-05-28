@@ -72,84 +72,81 @@ class _MainScreenState extends State<MainScreen> {
 
     return Scaffold(
       drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Colors.indigo),
-              child: Text('Dmail Menu', style: TextStyle(color: Colors.white, fontSize: 24)),
-            ),
-            ListTile(
-              leading: const Icon(Icons.inbox),
-              title: const Text('Hộp thư đến'),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: const Icon(Icons.send),
-              title: const Text('Đã gửi'),
-              onTap: () {
+        child: Container(
+          color: Colors.deepPurple[50],
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              DrawerHeader(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.deepPurple, Colors.purpleAccent],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                margin: EdgeInsets.zero,
+                padding: EdgeInsets.zero,
+                child: Container(
+                  width: double.infinity,
+                  height: 160,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircleAvatar(
+                        radius: 32,
+                        backgroundImage: const AssetImage('assets/images/avatar1.webp'),
+                        backgroundColor: Colors.white,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        (user.displayName != null && user.displayName!.isNotEmpty) ? user.displayName! : 'Dmail',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black26,
+                              offset: Offset(1, 2),
+                              blurRadius: 4,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              _drawerItem(Icons.inbox, 'Hộp thư đến', () => Navigator.pop(context)),
+              _drawerItem(Icons.send, 'Đã gửi', () {
                 Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => SentTab(filter: _filter)),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.star),
-              title: const Text('Được gắn sao'),
-              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => SentTab(filter: _filter)));
+              }),
+              _drawerItem(Icons.star, 'Được gắn sao', () {
                 Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const StarredTab()),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.drafts),
-              title: const Text('Bản nháp'),
-              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const StarredTab()));
+              }),
+              _drawerItem(Icons.drafts, 'Bản nháp', () {
                 Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const DraftTab()),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.delete),
-              title: const Text('Thùng rác'),
-              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const DraftTab()));
+              }),
+              _drawerItem(Icons.delete, 'Thùng rác', () {
                 Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const TrashTab()),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.label),
-              title: const Text('Quản lý nhãn'),
-              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const TrashTab()));
+              }),
+              _drawerItem(Icons.label, 'Quản lý nhãn', () {
                 Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const LabelManagementScreen()),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('Cài đặt'),
-              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const LabelManagementScreen()));
+              }),
+              _drawerItem(Icons.settings, 'Cài đặt', () {
                 Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Đăng xuất'),
-              onTap: () async {
+              }),
+              const Divider(),
+              _drawerItem(Icons.logout, 'Đăng xuất', () async {
                 try {
                   await FirebaseAuth.instance.signOut();
                   Navigator.pushAndRemoveUntil(
@@ -162,30 +159,42 @@ class _MainScreenState extends State<MainScreen> {
                     SnackBar(content: Text('Lỗi khi đăng xuất: ${e.toString()}')),
                   );
                 }
-              },
-            ),
-          ],
+              }, color: Colors.red),
+            ],
+          ),
         ),
       ),
       appBar: AppBar(
-        title: TextField(
-          controller: _searchController,
-          decoration: InputDecoration(
-            hintText: 'Tìm kiếm email',
-            border: InputBorder.none,
-            hintStyle: const TextStyle(color: Colors.white54),
-            suffixIcon: _filter.keyword.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.clear, color: Colors.white),
-                    onPressed: () {
-                      _searchController.clear();
-                    },
-                  )
-                : null,
+        elevation: 0,
+        backgroundColor: Colors.deepPurple,
+        title: Container(
+          height: 44,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Colors.deepPurple[100],
+            borderRadius: BorderRadius.circular(28),
           ),
-          style: const TextStyle(color: Colors.white),
+          child: TextField(
+            controller: _searchController,
+            textAlignVertical: TextAlignVertical.center,
+            decoration: InputDecoration(
+              hintText: 'Tìm kiếm email',
+              border: InputBorder.none,
+              hintStyle: const TextStyle(color: Colors.white70, fontSize: 16),
+              prefixIcon: const Icon(Icons.search, color: Colors.white),
+              suffixIcon: _filter.keyword.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, color: Colors.white),
+                      onPressed: () {
+                        _searchController.clear();
+                      },
+                    )
+                  : null,
+              contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 8),
+            ),
+            style: const TextStyle(color: Colors.white, fontSize: 16),
+          ),
         ),
-        backgroundColor: Colors.indigo,
         actions: [
           IconButton(
             icon: Icon(
@@ -220,9 +229,29 @@ class _MainScreenState extends State<MainScreen> {
             MaterialPageRoute(builder: (_) => const ComposeEmailScreen()),
           );
         },
-        icon: const Icon(Icons.edit),
-        label: const Text('Soạn thư'),
+        icon: const Icon(Icons.edit, color: Colors.white),
+        label: const Text('Soạn thư', style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+        elevation: 4,
       ),
+    );
+  }
+
+  Widget _drawerItem(IconData icon, String title, VoidCallback onTap, {Color? color}) {
+    return ListTile(
+      leading: Icon(icon, color: color ?? Colors.deepPurple),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: color ?? Colors.deepPurple,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      onTap: onTap,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      hoverColor: Colors.deepPurple.withOpacity(0.08),
     );
   }
 }

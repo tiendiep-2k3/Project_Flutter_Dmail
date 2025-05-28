@@ -74,7 +74,8 @@ class _FilterDialogState extends State<FilterDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Bộ lọc tìm kiếm'),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: const Text('Bộ lọc tìm kiếm', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple)),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -82,17 +83,29 @@ class _FilterDialogState extends State<FilterDialog> {
           children: [
             TextField(
               controller: _keywordController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Từ khóa (tiêu đề hoặc nội dung)',
-                border: OutlineInputBorder(),
+                labelStyle: const TextStyle(color: Colors.deepPurple),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _senderController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Người gửi (email)',
-                border: OutlineInputBorder(),
+                labelStyle: const TextStyle(color: Colors.deepPurple),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -102,11 +115,12 @@ class _FilterDialogState extends State<FilterDialog> {
                   child: Text(
                     _startDate == null
                         ? 'Từ ngày'
-                        : 'Từ: ${DateFormat('dd/MM/yyyy').format(_startDate!)}',
-                    style: TextStyle(color: _startDate == null ? Colors.grey : Colors.black),
+                        : 'Từ: \\${DateFormat('dd/MM/yyyy').format(_startDate!)}',
+                    style: TextStyle(color: _startDate == null ? Colors.grey : Colors.deepPurple, fontWeight: FontWeight.w600),
                   ),
                 ),
                 TextButton(
+                  style: TextButton.styleFrom(foregroundColor: Colors.deepPurple),
                   onPressed: () => _selectDate(context, true),
                   child: const Text('Chọn'),
                 ),
@@ -118,11 +132,12 @@ class _FilterDialogState extends State<FilterDialog> {
                   child: Text(
                     _endDate == null
                         ? 'Đến ngày'
-                        : 'Đến: ${DateFormat('dd/MM/yyyy').format(_endDate!)}',
-                    style: TextStyle(color: _endDate == null ? Colors.grey : Colors.black),
+                        : 'Đến: \\${DateFormat('dd/MM/yyyy').format(_endDate!)}',
+                    style: TextStyle(color: _endDate == null ? Colors.grey : Colors.deepPurple, fontWeight: FontWeight.w600),
                   ),
                 ),
                 TextButton(
+                  style: TextButton.styleFrom(foregroundColor: Colors.deepPurple),
                   onPressed: () => _selectDate(context, false),
                   child: const Text('Chọn'),
                 ),
@@ -130,7 +145,7 @@ class _FilterDialogState extends State<FilterDialog> {
             ),
             const SizedBox(height: 16),
             CheckboxListTile(
-              title: const Text('Có tệp đính kèm'),
+              title: const Text('Có tệp đính kèm', style: TextStyle(fontWeight: FontWeight.w500)),
               value: _hasAttachments ?? false,
               onChanged: (value) {
                 setState(() {
@@ -138,16 +153,19 @@ class _FilterDialogState extends State<FilterDialog> {
                 });
               },
               tristate: true,
+              activeColor: Colors.deepPurple,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              controlAffinity: ListTileControlAffinity.leading,
             ),
             const SizedBox(height: 16),
-            const Text('Nhãn:', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text('Nhãn:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple)),
             if (_labels.isEmpty)
               const Text('Chưa có nhãn nào.')
             else
               Column(
                 children: _labels.map((label) {
                   return CheckboxListTile(
-                    title: Text(label['name'] ?? ''),
+                    title: Text(label['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.w500)),
                     value: _selectedLabelIds.contains(label['id']),
                     onChanged: (bool? value) {
                       setState(() {
@@ -158,6 +176,9 @@ class _FilterDialogState extends State<FilterDialog> {
                         }
                       });
                     },
+                    activeColor: Colors.deepPurple,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    controlAffinity: ListTileControlAffinity.leading,
                   );
                 }).toList(),
               ),
@@ -166,6 +187,7 @@ class _FilterDialogState extends State<FilterDialog> {
       ),
       actions: [
         TextButton(
+          style: TextButton.styleFrom(foregroundColor: Colors.red),
           onPressed: () {
             setState(() {
               _keywordController.clear();
@@ -179,10 +201,18 @@ class _FilterDialogState extends State<FilterDialog> {
           child: const Text('Xóa bộ lọc'),
         ),
         TextButton(
+          style: TextButton.styleFrom(foregroundColor: Colors.grey[700]),
           onPressed: () => Navigator.pop(context),
           child: const Text('Hủy'),
         ),
-        TextButton(
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.deepPurple,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            textStyle: const TextStyle(fontWeight: FontWeight.bold),
+          ),
           onPressed: () {
             final filter = SearchFilter(
               keyword: _keywordController.text.trim(),
