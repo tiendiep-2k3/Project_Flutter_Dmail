@@ -8,16 +8,40 @@ import 'package:test3/screens/home/draft_tab.dart';
 import 'package:test3/screens/home/trash_tab.dart';
 import 'package:test3/screens/home/label_management_screen.dart';
 import 'package:test3/screens/email/starred_tab.dart';
+import 'package:test3/screens/home/sent_tab.dart';
 
-class MainScreen extends StatelessWidget {
+class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
+
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.trim();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     // Kiểm tra trạng thái đăng nhập
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      // Nếu không có người dùng đăng nhập, tự động chuyển về HomeScreen
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.pushAndRemoveUntil(
           context,
@@ -43,6 +67,17 @@ class MainScreen extends StatelessWidget {
               leading: const Icon(Icons.inbox),
               title: const Text('Hộp thư đến'),
               onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.send),
+              title: const Text('Đã gửi'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => SentTab(searchQuery: _searchQuery)),
+                );
+              },
             ),
             ListTile(
               leading: const Icon(Icons.star),
@@ -117,11 +152,20 @@ class MainScreen extends StatelessWidget {
         ),
       ),
       appBar: AppBar(
-        title: const TextField(
+        title: TextField(
+          controller: _searchController,
           decoration: InputDecoration(
-            hintText: 'Search in mail',
+            hintText: 'Tìm kiếm email',
             border: InputBorder.none,
-            hintStyle: TextStyle(color: Colors.white54),
+            hintStyle: const TextStyle(color: Colors.white54),
+            suffixIcon: _searchQuery.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear, color: Colors.white),
+                    onPressed: () {
+                      _searchController.clear();
+                    },
+                  )
+                : null,
           ),
           style: const TextStyle(color: Colors.white),
         ),
@@ -144,7 +188,7 @@ class MainScreen extends StatelessWidget {
           )
         ],
       ),
-      body: const InboxTab(),
+      body: InboxTab(searchQuery: _searchQuery),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           Navigator.push(
@@ -153,7 +197,7 @@ class MainScreen extends StatelessWidget {
           );
         },
         icon: const Icon(Icons.edit),
-        label: const Text('Compose'),
+        label: const Text('Soạn thư'),
       ),
     );
   }

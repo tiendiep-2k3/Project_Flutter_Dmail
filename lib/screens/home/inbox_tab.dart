@@ -4,12 +4,18 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:test3/screens/email/email_detail_screen.dart';
 
 class InboxTab extends StatelessWidget {
-  const InboxTab({Key? key}) : super(key: key);
+  final String searchQuery;
+
+  const InboxTab({Key? key, this.searchQuery = ''}) : super(key: key);
 
   Future<void> deleteEmail(String docId) async {
-    await FirebaseFirestore.instance.collection('emails').doc(docId).update({
-      'folder': 'trash',
-    });
+    try {
+      await FirebaseFirestore.instance.collection('emails').doc(docId).update({
+        'folder': 'trash',
+      });
+    } catch (e) {
+      throw Exception('Lỗi khi chuyển email vào thùng rác: $e');
+    }
   }
 
   @override
@@ -26,8 +32,12 @@ class InboxTab extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
 
+        if (snapshot.hasError) {
+          return Center(child: Text('Lỗi truy vấn dữ liệu: ${snapshot.error}'));
+        }
+
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(child: Text("Không có email nào."));
+          return const Center(child: Text('Không có email nào.'));
         }
 
         final allEmails = snapshot.data!.docs;
@@ -42,13 +52,21 @@ class InboxTab extends StatelessWidget {
           final ccUids = List<String>.from(data['ccUids'] ?? []);
           final bccUids = List<String>.from(data['bccUids'] ?? []);
 
-          return toUid == currentUid ||
+          final matchesUser = toUid == currentUid ||
               ccUids.contains(currentUid) ||
               bccUids.contains(currentUid);
+
+          if (searchQuery.isEmpty) return matchesUser;
+
+          final subject = (data['subject'] ?? '').toString().toLowerCase();
+          final body = (data['body'] ?? '').toString().toLowerCase();
+          final query = searchQuery.toLowerCase();
+
+          return matchesUser && (subject.contains(query) || body.contains(query));
         }).toList();
 
         if (inbox.isEmpty) {
-          return const Center(child: Text("Không có email nào."));
+          return const Center(child: Text('Không tìm thấy email phù hợp.'));
         }
 
         return ListView.builder(
@@ -78,20 +96,33 @@ class InboxTab extends StatelessWidget {
                 return await showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: const Text("Xóa email"),
-                    content: const Text("Bạn có chắc muốn xóa email này?"),
+                    title: const Text('Xóa email'),
+                    content: const Text('Bạn có chắc muốn xóa email này?'),
                     actions: [
                       TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text("Hủy")),
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Hủy'),
+                      ),
                       TextButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: const Text("Xóa")),
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Xóa'),
+                      ),
                     ],
                   ),
                 );
               },
-              onDismissed: (_) => deleteEmail(docId),
+              onDismissed: (_) async {
+                try {
+                  await deleteEmail(docId);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Email đã được chuyển vào thùng rác')),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Lỗi: $e')),
+                  );
+                }
+              },
               child: ListTile(
                 title: Text(
                   subject,
