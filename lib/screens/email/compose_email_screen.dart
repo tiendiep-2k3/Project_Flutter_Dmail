@@ -1,3 +1,19 @@
+//  Tổng quan chức năng:
+// Soạn email đến người khác trong hệ thống
+
+// Hỗ trợ CC, BCC
+
+// Tự động lưu bản nháp sau 1 giây không nhập
+
+// Cho phép đính kèm nhiều tệp
+
+// Gửi email đến người nhận hợp lệ (theo email)
+
+
+
+
+
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';

@@ -37,9 +37,9 @@ class HomeScreen extends StatelessWidget {
                     ),
                     padding: const EdgeInsets.all(24),
                     child: Image.asset(
-                      'assets/images/Dmail.png',
-                      width: 72,
-                      height: 72,
+                      'assets/images/Dmail_logo.png',
+                      width: 160,
+                      height: 160,
                     ),
                   ),
                   const SizedBox(height: 32),

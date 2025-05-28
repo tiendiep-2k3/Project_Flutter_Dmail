@@ -32,8 +32,8 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: Colors.white,
       body: Center(
         child: Image(
-          image: AssetImage('assets/images/Dmail.png'),
-          width: 160,
+          image: AssetImage('assets/images/Dmail_logo.png'),
+          width: 240,
         ),
       ),
     );

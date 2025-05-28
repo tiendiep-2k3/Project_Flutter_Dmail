@@ -1,11 +1,13 @@
+// man hình sau khi đăng nhập
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:test3/screens/email/compose_email_screen.dart';
 import 'package:test3/screens/profile/profile_screen.dart';
 import 'package:test3/screens/home/inbox_tab.dart';
-import 'package:test3/screens/home/home_screen.dart'; 
+import 'package:test3/screens/home/home_screen.dart';
 import 'package:test3/screens/home/draft_tab.dart';
-
+import 'package:test3/screens/home/trash_tab.dart'; // 🆕 thêm dòng này
 
 class MainScreen extends StatelessWidget {
   const MainScreen({super.key});
@@ -29,14 +31,25 @@ class MainScreen extends StatelessWidget {
               title: const Text('Hộp thư đến'),
               onTap: () => Navigator.pop(context),
             ),
-             ListTile(
+            ListTile(
               leading: const Icon(Icons.drafts),
               title: const Text('Bản nháp'),
               onTap: () {
-                Navigator.pop(context); // đóng drawer trước
+                Navigator.pop(context);
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const DraftTab()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete),
+              title: const Text('Thùng rác'), // 🗑️ Thêm menu Thùng rác
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const TrashTab()),
                 );
               },
             ),
@@ -52,8 +65,6 @@ class MainScreen extends StatelessWidget {
               title: const Text('Đăng xuất'),
               onTap: () async {
                 await FirebaseAuth.instance.signOut();
-            
-
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (_) => const HomeScreen()),
@@ -86,8 +97,7 @@ class MainScreen extends StatelessWidget {
               padding: const EdgeInsets.only(right: 12),
               child: CircleAvatar(
                 radius: 18,
-                backgroundImage:
-                    AssetImage('assets/images/avatar1.webp'),
+                backgroundImage: AssetImage('assets/images/avatar1.webp'),
               ),
             ),
           )

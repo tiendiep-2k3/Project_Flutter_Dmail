@@ -1,3 +1,10 @@
+// Hiển thị thông tin chi tiết của email: người gửi, người nhận, cc, nội dung, thời gian gửi, đính kèm
+
+// Có 2 nút chức năng: Trả lời và Chuyển tiếp
+
+// Nếu có đính kèm, cho phép mở file đó
+
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -75,7 +82,41 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
         : 'Không rõ thời gian';
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Chi tiết Email')),
+      appBar: AppBar(
+        title: const Text('Chi tiết Email'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.delete),
+            onPressed: () async {
+              final emailDoc = await FirebaseFirestore.instance
+                  .collection('emails')
+                  .where('fromUid', isEqualTo: widget.fromUid)
+                  .where('subject', isEqualTo: widget.subject)
+                  .where('body', isEqualTo: widget.body)
+                  .get();
+
+              if (emailDoc.docs.isNotEmpty) {
+                final docId = emailDoc.docs.first.id;
+                await FirebaseFirestore.instance
+                    .collection('emails')
+                    .doc(docId)
+                    .update({'folder': 'trash'});
+
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Email đã được chuyển vào thùng rác')),
+                  );
+                  Navigator.pop(context);
+                }
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Không tìm thấy email để xoá')),
+                );
+              }
+            },
+          )
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
