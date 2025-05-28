@@ -2,73 +2,97 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:test3/screens/email/email_detail_screen.dart';
+import 'package:test3/screens/search/search_filter.dart';
 
 class SentTab extends StatelessWidget {
-  final String searchQuery;
+  final SearchFilter filter;
 
-  const SentTab({Key? key, this.searchQuery = ''}) : super(key: key);
+  const SentTab({Key? key, required this.filter}) : super(key: key);
 
   Future<void> deleteEmail(String docId) async {
     try {
       await FirebaseFirestore.instance.collection('emails').doc(docId).update({
         'folder': 'trash',
       });
-    } catch (e) {
-      throw Exception('Lỗi khi chuyển email vào thùng rác: $e');
+    } catch (err) {
+      throw Exception('Lỗi khi chuyển email vào thùng rác: ${err.toString()}');
     }
   }
 
-  Future<String> getEmailFromUid(String? uid) async {
-    if (uid == null) return 'Không rõ';
+  Future<String> getEmailFromUid(String email) async {
+    if (email == '') return 'Không rõ';
     try {
-      final snap = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      return snap.data()?['email'] ?? 'Không rõ';
-    } catch (e) {
+      final snap = await FirebaseFirestore.instance.collection('users').doc(email).get();
+      return snap.data()!['email'] ?? 'Không rõ email';
+    } catch (err) {
       return 'Lỗi: Không thể lấy email';
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final currentUid = FirebaseAuth.instance.currentUser!.uid;
+    final email = FirebaseAuth.instance.currentUser!.uid;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Đã gửi')),
-      body: StreamBuilder<QuerySnapshot>(
+      appBar: AppBar(title: const Text('Danh sách email đã gửi')),
+      body: StreamBuilder(
         stream: FirebaseFirestore.instance
             .collection('emails')
-            .where('fromUid', isEqualTo: currentUid)
+            .where('email', isEqualTo: email)
             .where('isDraft', isEqualTo: false)
             .orderBy('timestamp', descending: true)
             .snapshots(),
-        builder: (context, snapshot) {
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text('Lỗi truy vấn dữ liệu: ${snapshot.error}'));
+            return Center(child: Text('Lỗi truy xuất dữ liệu: ${snapshot.error}'));
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text('Không có email đã gửi.'));
+            return const Center(child: Text('Không có email nào được gửi.'));
           }
 
-          final sentEmails = snapshot.data!.docs.where((doc) {
+          final sentEmails = snapshot.data!.docs.filter((doc) {
             final data = doc.data() as Map<String, dynamic>;
             if (data['folder'] == 'trash') return false;
 
-            if (searchQuery.isEmpty) return true;
-
             final subject = (data['subject'] ?? '').toString().toLowerCase();
             final body = (data['body'] ?? '').toString().toLowerCase();
-            final query = searchQuery.toLowerCase();
+            final timestamp = (data['timestamp'] as Timestamp?)?.toDate();
+            final attachments = List<dynamic>.from(data['attachments'] ?? []);
+            final labels = List<String>.from(data['labels'] ?? []);
 
-            return subject.contains(query) || body.contains(query);
+            bool matchesFilter = true;
+
+            if (filter.keyword.isNotEmpty) {
+              final query = filter.keyword.toLowerCase();
+              matchesFilter &= subject.contains(query) || body.contains(query);
+            }
+
+            if (filter.startDate != null && timestamp != null) {
+              matchesFilter &= timestamp.isAfter(filter.startDate!);
+            }
+
+            if (filter.endDate != null && timestamp != null) {
+              matchesFilter &= timestamp.isBefore(filter.endDate!.add(Duration(days: 1)));
+            }
+
+            if (filter.hasAttachments != null) {
+              matchesFilter &= filter.hasAttachments! ? attachments.isNotEmpty : attachments.isEmpty;
+            }
+
+            if (filter.labelIds.isNotEmpty) {
+              matchesFilter &= filter.labelIds.every((labelId) => labels.contains(labelId));
+            }
+
+            return matchesFilter;
           }).toList();
 
           if (sentEmails.isEmpty) {
-            return const Center(child: Text('Không tìm thấy email phù hợp.'));
+            return const Center(child: Text('Không tìm thấy email nào phù hợp.'));
           }
 
           return ListView.builder(
@@ -77,7 +101,7 @@ class SentTab extends StatelessWidget {
               final email = sentEmails[index];
               final data = email.data() as Map<String, dynamic>;
 
-              final subject = data['subject'] ?? '(Không tiêu đề)';
+              final subject = data['subject'] ?? '(Không có tiêu đề)';
               final body = data['body'] ?? '';
               final docId = email.id;
               final toUid = data['toUid'] as String?;
@@ -86,11 +110,11 @@ class SentTab extends StatelessWidget {
 
               return Dismissible(
                 key: Key(docId),
-                direction: DismissDirection.endToStart,
+                direction: DismissDirection.startToEnd,
                 background: Container(
                   color: Colors.red,
                   alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: const Icon(Icons.delete, color: Colors.white),
                 ),
                 confirmDismiss: (_) async {
@@ -98,7 +122,7 @@ class SentTab extends StatelessWidget {
                     context: context,
                     builder: (context) => AlertDialog(
                       title: const Text('Xóa email'),
-                      content: const Text('Bạn có chắc muốn xóa email này?'),
+                      content: const Text('Bạn có chắc chắn muốn xóa email này không?'),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(context, false),
@@ -106,7 +130,7 @@ class SentTab extends StatelessWidget {
                         ),
                         TextButton(
                           onPressed: () => Navigator.pop(context, true),
-                          child: const Text('Xóa'),
+                          child: const Text('Ok'),
                         ),
                       ],
                     ),
@@ -118,9 +142,9 @@ class SentTab extends StatelessWidget {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Email đã được chuyển vào thùng rác')),
                     );
-                  } catch (e) {
+                  } catch (err) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Lỗi: $e')),
+                      SnackBar(content: Text('Lỗi: ${err.toString()}')),
                     );
                   }
                 },
@@ -129,14 +153,14 @@ class SentTab extends StatelessWidget {
                     subject,
                     style: const TextStyle(
                       fontWeight: FontWeight.normal,
-                      color: Colors.black,
+                      color: Colors.blue,
                     ),
                   ),
                   subtitle: FutureBuilder<String>(
-                    future: getEmailFromUid(toUid),
-                    builder: (context, emailSnapshot) {
-                      final recipient = emailSnapshot.connectionState == ConnectionState.done
-                          ? emailSnapshot.data ?? 'Không rõ'
+                    future: getEmailFromUid(toUid ?? ''),
+                    builder: (context, snapshot) {
+                      final recipient = snapshot.connectionState == ConnectionState.done
+                          ? snapshot.data ?? 'Không rõ ràng'
                           : 'Đang tải...';
                       final displayText = body.isNotEmpty ? '$recipient: $body' : recipient;
                       return Text(
@@ -152,7 +176,7 @@ class SentTab extends StatelessWidget {
                   ),
                   leading: Icon(
                     isStarred ? Icons.star : Icons.send,
-                    color: isStarred ? Colors.amber : null,
+                    color: isStarred ? Colors.yellow : null,
                   ),
                   onTap: () {
                     Navigator.push(
@@ -161,7 +185,7 @@ class SentTab extends StatelessWidget {
                         builder: (_) => EmailDetailScreen(
                           subject: subject,
                           body: body,
-                          fromUid: currentUid,
+                          fromUid: email,
                           toUid: toUid,
                           ccUids: List<String>.from(data['ccUids'] ?? []),
                           bccUids: List<String>.from(data['bccUids'] ?? []),

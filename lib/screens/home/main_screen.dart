@@ -9,6 +9,8 @@ import 'package:test3/screens/home/trash_tab.dart';
 import 'package:test3/screens/home/label_management_screen.dart';
 import 'package:test3/screens/email/starred_tab.dart';
 import 'package:test3/screens/home/sent_tab.dart';
+import 'package:test3/screens/search/filter_dialog.dart';
+import 'package:test3/screens/search/search_filter.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -19,14 +21,14 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
+  SearchFilter _filter = SearchFilter();
 
   @override
   void initState() {
     super.initState();
     _searchController.addListener(() {
       setState(() {
-        _searchQuery = _searchController.text.trim();
+        _filter = _filter.copyWith(keyword: _searchController.text.trim());
       });
     });
   }
@@ -37,9 +39,23 @@ class _MainScreenState extends State<MainScreen> {
     super.dispose();
   }
 
+  void _showFilterDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => FilterDialog(
+        initialFilter: _filter,
+        onApply: (newFilter) {
+          setState(() {
+            _filter = newFilter;
+            _searchController.text = newFilter.keyword;
+          });
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Kiểm tra trạng thái đăng nhập
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -75,7 +91,7 @@ class _MainScreenState extends State<MainScreen> {
                 Navigator.pop(context);
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => SentTab(searchQuery: _searchQuery)),
+                  MaterialPageRoute(builder: (_) => SentTab(filter: _filter)),
                 );
               },
             ),
@@ -158,7 +174,7 @@ class _MainScreenState extends State<MainScreen> {
             hintText: 'Tìm kiếm email',
             border: InputBorder.none,
             hintStyle: const TextStyle(color: Colors.white54),
-            suffixIcon: _searchQuery.isNotEmpty
+            suffixIcon: _filter.keyword.isNotEmpty
                 ? IconButton(
                     icon: const Icon(Icons.clear, color: Colors.white),
                     onPressed: () {
@@ -171,6 +187,14 @@ class _MainScreenState extends State<MainScreen> {
         ),
         backgroundColor: Colors.indigo,
         actions: [
+          IconButton(
+            icon: Icon(
+              Icons.filter_list,
+              color: _filter.isEmpty ? Colors.white : Colors.amber,
+            ),
+            onPressed: _showFilterDialog,
+            tooltip: 'Bộ lọc nâng cao',
+          ),
           GestureDetector(
             onTap: () {
               Navigator.push(
@@ -185,10 +209,10 @@ class _MainScreenState extends State<MainScreen> {
                 backgroundImage: AssetImage('assets/images/avatar1.webp'),
               ),
             ),
-          )
+          ),
         ],
       ),
-      body: InboxTab(searchQuery: _searchQuery),
+      body: InboxTab(filter: _filter),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           Navigator.push(
