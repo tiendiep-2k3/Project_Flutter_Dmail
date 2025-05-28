@@ -47,6 +47,8 @@ class TrashTab extends StatelessWidget {
                         bccUids: List<String>.from(email['bccUids'] ?? []),
                         timestamp: (email['timestamp'] as Timestamp?)?.toDate(),
                         attachments: email['attachments'],
+                        docId: emails[index].id,
+                        labelName: 'Thùng rác',
                       ),
                     ),
                   );

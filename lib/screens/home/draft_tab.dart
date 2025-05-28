@@ -51,6 +51,7 @@ class DraftTab extends StatelessWidget {
                         body: body,
                         fromUid: fromUid,
                         timestamp: timestamp,
+                        labelName: 'Bản nháp',
                       ),
                     ),
                   );

@@ -7,7 +7,9 @@ class InboxTab extends StatelessWidget {
   const InboxTab({Key? key}) : super(key: key);
 
   Future<void> deleteEmail(String docId) async {
-    await FirebaseFirestore.instance.collection('emails').doc(docId).delete();
+    await FirebaseFirestore.instance.collection('emails').doc(docId).update({
+      'folder': 'trash', // Chuyển email vào thùng rác thay vì xóa hẳn
+    });
   }
 
   @override
@@ -34,8 +36,9 @@ class InboxTab extends StatelessWidget {
         final inbox = allEmails.where((doc) {
           final data = doc.data() as Map<String, dynamic>;
 
-          // Bỏ qua bản nháp
+          // Bỏ qua bản nháp và email trong thùng rác
           if (data['isDraft'] == true) return false;
+          if (data['folder'] == 'trash') return false;
 
           final toUid = data['toUid'];
           final ccUids = List<String>.from(data['ccUids'] ?? []);
@@ -61,6 +64,7 @@ class InboxTab extends StatelessWidget {
             final docId = email.id;
             final fromUid = data['fromUid'];
             final timestamp = (data['timestamp'] as Timestamp?)?.toDate();
+            final isRead = data['isRead'] ?? false; // Trạng thái đọc/chưa đọc
 
             return Dismissible(
               key: Key(docId),
@@ -78,16 +82,34 @@ class InboxTab extends StatelessWidget {
                     title: const Text("Xóa email"),
                     content: const Text("Bạn có chắc muốn xóa email này?"),
                     actions: [
-                      TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Hủy")),
-                      TextButton(onPressed: () => Navigator.pop(context, true), child: const Text("Xóa")),
+                      TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text("Hủy")),
+                      TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text("Xóa")),
                     ],
                   ),
                 );
               },
               onDismissed: (_) => deleteEmail(docId),
               child: ListTile(
-                title: Text(subject),
-                subtitle: Text(body, maxLines: 2, overflow: TextOverflow.ellipsis),
+                title: Text(
+                  subject,
+                  style: TextStyle(
+                    fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
+                    color: isRead ? Colors.black54 : Colors.black,
+                  ),
+                ),
+                subtitle: Text(
+                  body,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
+                    color: isRead ? Colors.black54 : Colors.black,
+                  ),
+                ),
                 leading: const Icon(Icons.email),
                 onTap: () {
                   Navigator.push(
@@ -97,7 +119,12 @@ class InboxTab extends StatelessWidget {
                         subject: subject,
                         body: body,
                         fromUid: fromUid,
+                        toUid: data['toUid'],
+                        ccUids: List<String>.from(data['ccUids'] ?? []),
+                        bccUids: List<String>.from(data['bccUids'] ?? []),
                         timestamp: timestamp,
+                        docId: docId, // Truyền docId vào EmailDetailScreen
+                        labelName: 'Hộp thư đến',
                       ),
                     ),
                   );

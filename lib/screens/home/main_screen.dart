@@ -1,5 +1,3 @@
-// man hình sau khi đăng nhập
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:test3/screens/email/compose_email_screen.dart';
@@ -7,7 +5,8 @@ import 'package:test3/screens/profile/profile_screen.dart';
 import 'package:test3/screens/home/inbox_tab.dart';
 import 'package:test3/screens/home/home_screen.dart';
 import 'package:test3/screens/home/draft_tab.dart';
-import 'package:test3/screens/home/trash_tab.dart'; // 🆕 thêm dòng này
+import 'package:test3/screens/home/trash_tab.dart';
+import 'package:test3/screens/home/label_management_screen.dart';
 
 class MainScreen extends StatelessWidget {
   const MainScreen({super.key});
@@ -23,8 +22,7 @@ class MainScreen extends StatelessWidget {
           children: [
             const DrawerHeader(
               decoration: BoxDecoration(color: Colors.indigo),
-              child: Text('Dmail Menu',
-                  style: TextStyle(color: Colors.white, fontSize: 24)),
+              child: Text('Dmail Menu', style: TextStyle(color: Colors.white, fontSize: 24)),
             ),
             ListTile(
               leading: const Icon(Icons.inbox),
@@ -44,12 +42,23 @@ class MainScreen extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.delete),
-              title: const Text('Thùng rác'), // 🗑️ Thêm menu Thùng rác
+              title: const Text('Thùng rác'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const TrashTab()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.label),
+              title: const Text('Quản lý nhãn'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LabelManagementScreen()),
                 );
               },
             ),
@@ -97,7 +106,7 @@ class MainScreen extends StatelessWidget {
               padding: const EdgeInsets.only(right: 12),
               child: CircleAvatar(
                 radius: 18,
-                backgroundImage: AssetImage('assets/images/avatar1.webp'),
+                backgroundImage: const AssetImage('assets/images/avatar1.webp'),
               ),
             ),
           )

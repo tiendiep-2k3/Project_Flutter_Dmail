@@ -1,14 +1,8 @@
-// Hiển thị thông tin chi tiết của email: người gửi, người nhận, cc, nội dung, thời gian gửi, đính kèm
-
-// Có 2 nút chức năng: Trả lời và Chuyển tiếp
-
-// Nếu có đính kèm, cho phép mở file đó
-
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:test3/screens/email/compose_email_screen.dart';
+import 'package:test3/screens/home/label_management_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class EmailDetailScreen extends StatefulWidget {
@@ -20,6 +14,8 @@ class EmailDetailScreen extends StatefulWidget {
   final List<String>? bccUids;
   final DateTime? timestamp;
   final List<dynamic>? attachments;
+  final String? docId;
+  final String labelName;
 
   const EmailDetailScreen({
     Key? key,
@@ -31,6 +27,8 @@ class EmailDetailScreen extends StatefulWidget {
     this.bccUids,
     this.timestamp,
     this.attachments,
+    this.docId,
+    required this.labelName,
   }) : super(key: key);
 
   @override
@@ -42,12 +40,16 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
   String? toEmail;
   List<String> ccEmails = [];
   late final String currentUid;
+  bool isRead = false;
+  List<String> emailLabels = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
     currentUid = FirebaseAuth.instance.currentUser!.uid;
     _loadEmails();
+    _loadEmailStatus();
   }
 
   Future<void> _loadEmails() async {
@@ -72,49 +74,240 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
     setState(() {});
   }
 
+  Future<void> _loadEmailStatus() async {
+    if (widget.docId != null) {
+      final emailDoc = await FirebaseFirestore.instance
+          .collection('emails')
+          .doc(widget.docId)
+          .get();
+
+      if (emailDoc.exists) {
+        final data = emailDoc.data() as Map<String, dynamic>;
+        setState(() {
+          isRead = data['isRead'] ?? false;
+          emailLabels = List<String>.from(data['labels'] ?? []);
+          isLoading = false;
+        });
+      }
+    } else {
+      setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _toggleReadStatus() async {
+    if (widget.docId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Không thể cập nhật trạng thái email')),
+      );
+      return;
+    }
+
+    setState(() => isLoading = true);
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('emails')
+          .doc(widget.docId)
+          .update({'isRead': !isRead});
+
+      setState(() {
+        isRead = !isRead;
+        isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(isRead ? 'Đã đánh dấu là đã đọc' : 'Đã đánh dấu là chưa đọc')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi: ${e.toString()}')),
+      );
+      setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _moveToTrash() async {
+    if (widget.docId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Không thể tìm thấy email để xóa')),
+      );
+      return;
+    }
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('emails')
+          .doc(widget.docId)
+          .update({'folder': 'trash'});
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Email đã được chuyển vào thùng rác')),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi: ${e.toString()}')),
+      );
+    }
+  }
+
+  Future<void> _updateLabels(List<String> selectedLabels) async {
+    if (widget.docId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Không thể cập nhật nhãn: Email không tồn tại')),
+      );
+      return;
+    }
+
+    setState(() => isLoading = true);
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('emails')
+          .doc(widget.docId)
+          .update({'labels': selectedLabels});
+
+      setState(() {
+        emailLabels = selectedLabels;
+        isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đã cập nhật nhãn thành công')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi khi cập nhật nhãn: ${e.toString()}')),
+      );
+      setState(() => isLoading = false);
+    }
+  }
+
+  Stream<DocumentSnapshot<Map<String, dynamic>>> _getUserLabelsStream() {
+    return FirebaseFirestore.instance
+        .collection('labels')
+        .doc(currentUid)
+        .snapshots();
+  }
+
+  Future<void> _showLabelDialog() async {
+    if (!mounted) return;
+
+    // Lấy danh sách nhãn một lần trước khi show dialog
+    final snapshot = await FirebaseFirestore.instance
+        .collection('labels')
+        .doc(currentUid)
+        .get();
+    final data = snapshot.data();
+    final labels = List<Map<String, dynamic>>.from(data?['labels'] ?? []);
+
+    // Khởi tạo selectedLabels ở ngoài
+    final Map<String, bool> selectedLabels = {};
+    for (var label in labels) {
+      selectedLabels[label['id']] = emailLabels.contains(label['id']);
+    }
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Chọn nhãn'),
+              content: SingleChildScrollView(
+                child: labels.isEmpty
+                    ? Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('Chưa có nhãn nào.'),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: () async {
+                              Navigator.pop(context);
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const LabelManagementScreen(),
+                                ),
+                              );
+                            },
+                            child: const Text('Tạo nhãn mới'),
+                          ),
+                        ],
+                      )
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: labels.map((label) {
+                          return CheckboxListTile(
+                            title: Text(label['name']?.toString() ?? ''),
+                            value: selectedLabels[label['id']],
+                            onChanged: (bool? value) {
+                              setDialogState(() {
+                                selectedLabels[label['id']] = value ?? false;
+                              });
+                            },
+                          );
+                        }).toList(),
+                      ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Hủy'),
+                ),
+                if (labels.isNotEmpty)
+                  TextButton(
+                    onPressed: () {
+                      final updatedLabels = selectedLabels.entries
+                          .where((entry) => entry.value)
+                          .map((entry) => entry.key)
+                          .toList();
+                      _updateLabels(updatedLabels);
+                      Navigator.pop(context);
+                    },
+                    child: const Text('OK'),
+                  ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   bool get isBccUser => widget.bccUids != null && widget.bccUids!.contains(currentUid);
 
   @override
   Widget build(BuildContext context) {
     final timeStr = widget.timestamp != null
         ? '${widget.timestamp!.day}/${widget.timestamp!.month}/${widget.timestamp!.year}, '
-          '${widget.timestamp!.hour}:${widget.timestamp!.minute.toString().padLeft(2, '0')}'
+            '${widget.timestamp!.hour}:${widget.timestamp!.minute.toString().padLeft(2, '0')}'
         : 'Không rõ thời gian';
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Chi tiết Email'),
+        title: Text('Nhãn: ${widget.labelName}'),
         actions: [
           IconButton(
-            icon: Icon(Icons.delete),
-            onPressed: () async {
-              final emailDoc = await FirebaseFirestore.instance
-                  .collection('emails')
-                  .where('fromUid', isEqualTo: widget.fromUid)
-                  .where('subject', isEqualTo: widget.subject)
-                  .where('body', isEqualTo: widget.body)
-                  .get();
-
-              if (emailDoc.docs.isNotEmpty) {
-                final docId = emailDoc.docs.first.id;
-                await FirebaseFirestore.instance
-                    .collection('emails')
-                    .doc(docId)
-                    .update({'folder': 'trash'});
-
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Email đã được chuyển vào thùng rác')),
-                  );
-                  Navigator.pop(context);
-                }
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Không tìm thấy email để xoá')),
-                );
-              }
-            },
-          )
+            icon: Icon(
+              isRead ? Icons.mark_email_read : Icons.mark_email_unread,
+              color: isRead ? Colors.black54 : Colors.black,
+            ),
+            onPressed: isLoading ? null : _toggleReadStatus,
+            tooltip: isRead ? 'Đánh dấu là chưa đọc' : 'Đánh dấu là đã đọc',
+          ),
+          IconButton(
+            icon: const Icon(Icons.label),
+            onPressed: _showLabelDialog,
+            tooltip: 'Gán nhãn',
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: _moveToTrash,
+            tooltip: 'Chuyển vào thùng rác',
+          ),
         ],
       ),
       body: Padding(
@@ -152,6 +345,34 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
             const SizedBox(height: 12),
             Text(widget.body, style: const TextStyle(fontSize: 16)),
             const SizedBox(height: 16),
+            if (emailLabels.isNotEmpty) ...[
+              const Text("Nhãn:", style: TextStyle(fontWeight: FontWeight.bold)),
+              StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                stream: FirebaseFirestore.instance.collection('labels').doc(currentUid).snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData || snapshot.hasError) return const SizedBox.shrink();
+                  final data = snapshot.data!.data();
+                  final labels = List<Map<String, dynamic>>.from(data?['labels'] ?? []);
+                  return Wrap(
+                    children: emailLabels.map((labelId) {
+                      final label = labels.firstWhere(
+                        (l) => l['id'] == labelId,
+                        orElse: () => {'name': 'Không xác định', 'id': ''},
+                      );
+                      return Chip(
+                        label: Text(label['name']?.toString() ?? ''),
+                        onDeleted: () {
+                          final updatedLabels = List<String>.from(emailLabels);
+                          updatedLabels.remove(labelId);
+                          _updateLabels(updatedLabels);
+                        },
+                      );
+                    }).toList(),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
             if (widget.attachments != null && widget.attachments!.isNotEmpty) ...[
               const Text("Tệp đính kèm:", style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
@@ -217,7 +438,7 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
                   },
                 ),
               ],
-            )
+            ),
           ],
         ),
       ),
