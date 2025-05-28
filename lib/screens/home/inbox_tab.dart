@@ -8,7 +8,7 @@ class InboxTab extends StatelessWidget {
 
   Future<void> deleteEmail(String docId) async {
     await FirebaseFirestore.instance.collection('emails').doc(docId).update({
-      'folder': 'trash', // Chuyển email vào thùng rác thay vì xóa hẳn
+      'folder': 'trash',
     });
   }
 
@@ -32,11 +32,9 @@ class InboxTab extends StatelessWidget {
 
         final allEmails = snapshot.data!.docs;
 
-        // Lọc các email mà người dùng hiện tại là người nhận, CC hoặc BCC
         final inbox = allEmails.where((doc) {
           final data = doc.data() as Map<String, dynamic>;
 
-          // Bỏ qua bản nháp và email trong thùng rác
           if (data['isDraft'] == true) return false;
           if (data['folder'] == 'trash') return false;
 
@@ -64,7 +62,8 @@ class InboxTab extends StatelessWidget {
             final docId = email.id;
             final fromUid = data['fromUid'];
             final timestamp = (data['timestamp'] as Timestamp?)?.toDate();
-            final isRead = data['isRead'] ?? false; // Trạng thái đọc/chưa đọc
+            final isRead = data['isRead'] ?? false;
+            final isStarred = data['isStarred'] ?? false;
 
             return Dismissible(
               key: Key(docId),
@@ -110,7 +109,10 @@ class InboxTab extends StatelessWidget {
                     color: isRead ? Colors.black54 : Colors.black,
                   ),
                 ),
-                leading: const Icon(Icons.email),
+                leading: Icon(
+                  isStarred ? Icons.star : Icons.email,
+                  color: isStarred ? Colors.amber : null,
+                ),
                 onTap: () {
                   Navigator.push(
                     context,
@@ -123,7 +125,7 @@ class InboxTab extends StatelessWidget {
                         ccUids: List<String>.from(data['ccUids'] ?? []),
                         bccUids: List<String>.from(data['bccUids'] ?? []),
                         timestamp: timestamp,
-                        docId: docId, // Truyền docId vào EmailDetailScreen
+                        docId: docId,
                         labelName: 'Hộp thư đến',
                       ),
                     ),

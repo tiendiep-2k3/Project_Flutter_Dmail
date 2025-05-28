@@ -1,19 +1,3 @@
-//  Tổng quan chức năng:
-// Soạn email đến người khác trong hệ thống
-
-// Hỗ trợ CC, BCC
-
-// Tự động lưu bản nháp sau 1 giây không nhập
-
-// Cho phép đính kèm nhiều tệp
-
-// Gửi email đến người nhận hợp lệ (theo email)
-
-
-
-
-
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -102,6 +86,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
       'subject': _subjectController.text.trim(),
       'body': _bodyController.text.trim(),
       'isDraft': true,
+      'isStarred': false, // Thêm trường isStarred
       'timestamp': FieldValue.serverTimestamp(),
     };
 
@@ -114,23 +99,23 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
   }
 
   Future<String> uploadFileToStorage(PlatformFile file) async {
-  if (file.bytes == null) {
-    throw Exception('Không đọc được nội dung file: ${file.name}');
+    if (file.bytes == null) {
+      throw Exception('Không đọc được nội dung file: ${file.name}');
+    }
+
+    String contentType = 'application/octet-stream';
+    final ext = file.extension?.toLowerCase();
+    if (ext == 'jpg' || ext == 'jpeg') contentType = 'image/jpeg';
+    else if (ext == 'png') contentType = 'image/png';
+    else if (ext == 'webp') contentType = 'image/webp';
+    else if (ext == 'pdf') contentType = 'application/pdf';
+    else if (ext == 'docx') contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+    final ref = FirebaseStorage.instance.ref().child('attachments/${file.name}');
+    final metadata = SettableMetadata(contentType: contentType);
+    final upload = await ref.putData(file.bytes!, metadata);
+    return await upload.ref.getDownloadURL();
   }
-
-  String contentType = 'application/octet-stream';
-  final ext = file.extension?.toLowerCase();
-  if (ext == 'jpg' || ext == 'jpeg') contentType = 'image/jpeg';
-  else if (ext == 'png') contentType = 'image/png';
-  else if (ext == 'webp') contentType = 'image/webp';
-  else if (ext == 'pdf') contentType = 'application/pdf';
-  else if (ext == 'docx') contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-
-  final ref = FirebaseStorage.instance.ref().child('attachments/${file.name}');
-  final metadata = SettableMetadata(contentType: contentType);
-  final upload = await ref.putData(file.bytes!, metadata);
-  return await upload.ref.getDownloadURL();
-}
 
   Future<void> _sendEmail() async {
     if (!_formKey.currentState!.validate()) return;
@@ -187,6 +172,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
       'timestamp': FieldValue.serverTimestamp(),
       'isRead': false,
       'isDraft': false,
+      'isStarred': false, // Thêm trường isStarred
       'attachments': attachments,
     };
 
@@ -258,7 +244,6 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
           IconButton(
             icon: const Icon(Icons.delete_outline),
             onPressed: () {
-              // TODO: Implement delete draft
               Navigator.pop(context);
             },
           ),

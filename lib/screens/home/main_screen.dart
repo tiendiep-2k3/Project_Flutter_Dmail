@@ -7,13 +7,28 @@ import 'package:test3/screens/home/home_screen.dart';
 import 'package:test3/screens/home/draft_tab.dart';
 import 'package:test3/screens/home/trash_tab.dart';
 import 'package:test3/screens/home/label_management_screen.dart';
+import 'package:test3/screens/email/starred_tab.dart';
 
 class MainScreen extends StatelessWidget {
   const MainScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Kiểm tra trạng thái đăng nhập
     final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      // Nếu không có người dùng đăng nhập, tự động chuyển về HomeScreen
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          (route) => false,
+        );
+      });
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       drawer: Drawer(
@@ -28,6 +43,17 @@ class MainScreen extends StatelessWidget {
               leading: const Icon(Icons.inbox),
               title: const Text('Hộp thư đến'),
               onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.star),
+              title: const Text('Được gắn sao'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const StarredTab()),
+                );
+              },
             ),
             ListTile(
               leading: const Icon(Icons.drafts),
@@ -73,12 +99,18 @@ class MainScreen extends StatelessWidget {
               leading: const Icon(Icons.logout),
               title: const Text('Đăng xuất'),
               onTap: () async {
-                await FirebaseAuth.instance.signOut();
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (_) => const HomeScreen()),
-                  (route) => false,
-                );
+                try {
+                  await FirebaseAuth.instance.signOut();
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (_) => const HomeScreen()),
+                    (route) => false,
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Lỗi khi đăng xuất: ${e.toString()}')),
+                  );
+                }
               },
             ),
           ],
@@ -91,7 +123,7 @@ class MainScreen extends StatelessWidget {
             border: InputBorder.none,
             hintStyle: TextStyle(color: Colors.white54),
           ),
-          style: TextStyle(color: Colors.white),
+          style: const TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.indigo,
         actions: [
@@ -102,11 +134,11 @@ class MainScreen extends StatelessWidget {
                 MaterialPageRoute(builder: (_) => const ProfileScreen()),
               );
             },
-            child: Padding(
-              padding: const EdgeInsets.only(right: 12),
+            child: const Padding(
+              padding: EdgeInsets.only(right: 12),
               child: CircleAvatar(
                 radius: 18,
-                backgroundImage: const AssetImage('assets/images/avatar1.webp'),
+                backgroundImage: AssetImage('assets/images/avatar1.webp'),
               ),
             ),
           )

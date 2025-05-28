@@ -41,6 +41,7 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
   List<String> ccEmails = [];
   late final String currentUid;
   bool isRead = false;
+  bool isStarred = false;
   List<String> emailLabels = [];
   bool isLoading = true;
 
@@ -85,9 +86,26 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
         final data = emailDoc.data() as Map<String, dynamic>;
         setState(() {
           isRead = data['isRead'] ?? false;
+          isStarred = data['isStarred'] ?? false;
           emailLabels = List<String>.from(data['labels'] ?? []);
           isLoading = false;
         });
+
+        if (!isRead) {
+          try {
+            await FirebaseFirestore.instance
+                .collection('emails')
+                .doc(widget.docId)
+                .update({'isRead': true});
+            setState(() {
+              isRead = true;
+            });
+          } catch (e) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Lỗi khi đánh dấu đã đọc: ${e.toString()}')),
+            );
+          }
+        }
       }
     } else {
       setState(() => isLoading = false);
@@ -117,6 +135,38 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(isRead ? 'Đã đánh dấu là đã đọc' : 'Đã đánh dấu là chưa đọc')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi: ${e.toString()}')),
+      );
+      setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _toggleStarStatus() async {
+    if (widget.docId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Không thể cập nhật trạng thái gắn sao')),
+      );
+      return;
+    }
+
+    setState(() => isLoading = true);
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('emails')
+          .doc(widget.docId)
+          .update({'isStarred': !isStarred});
+
+      setState(() {
+        isStarred = !isStarred;
+        isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(isStarred ? 'Đã gắn dấu sao' : 'Đã bỏ dấu sao')),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -195,7 +245,6 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
   Future<void> _showLabelDialog() async {
     if (!mounted) return;
 
-    // Lấy danh sách nhãn một lần trước khi show dialog
     final snapshot = await FirebaseFirestore.instance
         .collection('labels')
         .doc(currentUid)
@@ -203,7 +252,6 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
     final data = snapshot.data();
     final labels = List<Map<String, dynamic>>.from(data?['labels'] ?? []);
 
-    // Khởi tạo selectedLabels ở ngoài
     final Map<String, bool> selectedLabels = {};
     for (var label in labels) {
       selectedLabels[label['id']] = emailLabels.contains(label['id']);
@@ -297,6 +345,14 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
             ),
             onPressed: isLoading ? null : _toggleReadStatus,
             tooltip: isRead ? 'Đánh dấu là chưa đọc' : 'Đánh dấu là đã đọc',
+          ),
+          IconButton(
+            icon: Icon(
+              isStarred ? Icons.star : Icons.star_border,
+              color: isStarred ? Colors.amber : Colors.black,
+            ),
+            onPressed: isLoading ? null : _toggleStarStatus,
+            tooltip: isStarred ? 'Bỏ gắn sao' : 'Gắn sao',
           ),
           IconButton(
             icon: const Icon(Icons.label),
