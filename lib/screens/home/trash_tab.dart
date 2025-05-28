@@ -15,16 +15,30 @@ class TrashTab extends StatelessWidget {
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('emails')
-            .where('toUid', isEqualTo: uid)
             .where('folder', isEqualTo: 'trash')
-            .orderBy('timestamp', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('Lỗi: \\${snapshot.error}'));
+          }
+          if (!snapshot.hasData) {
+            return const Center(child: Text('Không có dữ liệu.'));
+          }
 
-          final emails = snapshot.data!.docs;
+          // Lọc lại các email mà user là toUid, ccUids hoặc bccUids
+          final allEmails = snapshot.data!.docs;
+          final emails = allEmails.where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            final toUid = data['toUid'];
+            final ccUids = List<String>.from(data['ccUids'] ?? []);
+            final bccUids = List<String>.from(data['bccUids'] ?? []);
+            return toUid == uid || ccUids.contains(uid) || bccUids.contains(uid);
+          }).toList();
 
-          if (emails.isEmpty) return Center(child: Text('Không có email trong thùng rác'));
+          if (emails.isEmpty) return const Center(child: Text('Không có email trong thùng rác'));
 
           return ListView.builder(
             itemCount: emails.length,
