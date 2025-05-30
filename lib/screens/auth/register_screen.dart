@@ -117,6 +117,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     filled: true,
                     fillColor: Colors.white,
+                    hintText: "Nhập số điênh thoại của bạn",
+                    hintStyle: TextStyle(color: Colors.deepPurple.withOpacity(0.6))
                   ),
                   style: const TextStyle(color: Colors.deepPurple),
                   validator: (value) {
@@ -150,6 +152,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     filled: true,
                     fillColor: Colors.white,
+                    hintText: 'VD: Phạm Thị Thu H', 
+                    hintStyle: TextStyle(color: Colors.deepPurple),
                   ),
                   style: const TextStyle(color: Colors.deepPurple),
                 ),
@@ -176,6 +180,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     filled: true,
                     fillColor: Colors.white,
+                    hintText: 'Ít nhất 6 kí tự',
+                    hintStyle: TextStyle(color: Colors.deepPurple),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _isObscure ? Icons.visibility_off : Icons.visibility,
@@ -215,6 +221,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     filled: true,
                     fillColor: Colors.white,
+                    hintText: 'Nhập lại mật khẩu của bạn',
+                    hintStyle: TextStyle(color: Colors.deepPurple),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _isObscureConfirm ? Icons.visibility_off : Icons.visibility,
