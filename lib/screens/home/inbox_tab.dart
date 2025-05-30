@@ -16,7 +16,7 @@ class InboxTab extends StatefulWidget {
 }
 
 class _InboxTabState extends State<InboxTab> {
-  bool _hasShownNotification = false;
+  int _lastNotifiedCount = 0; // Thay đổi từ bool sang int để track số lượng email đã thông báo
 
   Future<void> deleteEmail(String docId) async {
     try {
@@ -47,6 +47,17 @@ class _InboxTabState extends State<InboxTab> {
     await prefs.setInt('lastEmailCount_${FirebaseAuth.instance.currentUser!.uid}', count);
   }
 
+  // Thêm function để lưu/lấy timestamp của lần thông báo cuối
+  Future<int> _getLastNotificationTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('lastNotificationTime_${FirebaseAuth.instance.currentUser!.uid}') ?? 0;
+  }
+
+  Future<void> _setLastNotificationTime(int timestamp) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('lastNotificationTime_${FirebaseAuth.instance.currentUser!.uid}', timestamp);
+  }
+
   // Thêm function để check notification settings
   Future<bool> _getNotificationSettings() async {
     try {
@@ -68,18 +79,28 @@ class _InboxTabState extends State<InboxTab> {
   }
 
   void _showNewEmailNotification(int newCount, int lastCount) async {
-    // Kiểm tra xem đã hiển thị thông báo chưa
-    if (_hasShownNotification) return;
-    
     // Kiểm tra cài đặt thông báo của user
     final notificationsEnabled = await _getNotificationSettings();
     if (!notificationsEnabled) return;
     
-    // Chỉ hiển thị khi có email mới (newCount > lastCount)
-    if (newCount > lastCount && newCount > 0) {
+    // Lấy thời gian thông báo cuối cùng
+    final lastNotificationTime = await _getLastNotificationTime();
+    final currentTime = DateTime.now().millisecondsSinceEpoch;
+    
+    // Chỉ hiển thị thông báo nếu:
+    // 1. Có email mới (newCount > lastCount)
+    // 2. Chưa thông báo trong vòng 30 giây (tránh spam)
+    // 3. Số lượng email mới lớn hơn số đã thông báo trước đó
+    if (newCount > lastCount && 
+        newCount > 0 && 
+        (currentTime - lastNotificationTime) > 30000 && // 30 giây
+        newCount > _lastNotifiedCount) {
+      
       if (mounted) { // Kiểm tra widget còn mounted không
+        final newEmailsCount = newCount - (lastCount > _lastNotifiedCount ? lastCount : _lastNotifiedCount);
+        
         Flushbar(
-          message: 'Bạn có ${newCount - lastCount} email mới trong hộp thư!',
+          message: 'Bạn có $newEmailsCount email mới trong hộp thư!',
           duration: const Duration(seconds: 3),
           flushbarPosition: FlushbarPosition.TOP,
           backgroundColor: Colors.blue,
@@ -87,7 +108,10 @@ class _InboxTabState extends State<InboxTab> {
           margin: const EdgeInsets.all(8),
           borderRadius: BorderRadius.circular(8),
         ).show(context);
-        _hasShownNotification = true;
+        
+        // Cập nhật thời gian và số lượng đã thông báo
+        await _setLastNotificationTime(currentTime);
+        _lastNotifiedCount = newCount;
       }
     }
   }
@@ -95,7 +119,12 @@ class _InboxTabState extends State<InboxTab> {
   @override
   void initState() {
     super.initState();
-    _hasShownNotification = false;
+    // Khởi tạo _lastNotifiedCount từ SharedPreferences
+    _initializeNotificationState();
+  }
+
+  Future<void> _initializeNotificationState() async {
+    _lastNotifiedCount = await _getLastEmailCount();
   }
 
   @override
@@ -229,15 +258,15 @@ class _InboxTabState extends State<InboxTab> {
           );
         }
 
-        // Check for new emails on first load với improved logic
+        // Check for new emails với improved logic
         Future.microtask(() async {
           final lastCount = await _getLastEmailCount();
           final newCount = inbox.length;
           
-          // Chỉ hiển thị thông báo khi có email mới thực sự
-          if (newCount > lastCount) {
-            _showNewEmailNotification(newCount, lastCount);
-          }
+          // Hiển thị thông báo nếu có email mới
+          _showNewEmailNotification(newCount, lastCount);
+          
+          // Cập nhật số lượng email hiện tại
           await _setLastEmailCount(newCount);
         });
 
