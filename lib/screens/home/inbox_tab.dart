@@ -7,7 +7,7 @@ import 'package:another_flushbar/flushbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class InboxTab extends StatefulWidget {
-  final SearchFilter filter;
+  final SearchFilter filter; //F
 
   const InboxTab({Key? key, required this.filter}) : super(key: key);
 
