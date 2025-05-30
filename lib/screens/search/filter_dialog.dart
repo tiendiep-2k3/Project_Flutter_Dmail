@@ -225,7 +225,7 @@ class _FilterDialogState extends State<FilterDialog> {
             widget.onApply(filter);
             Navigator.pop(context);
           },
-          child: const Text('Áp dụng'),
+          child: const Text('Áp dụng'), //T
         ),
       ],
     );
