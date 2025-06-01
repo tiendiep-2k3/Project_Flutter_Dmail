@@ -164,7 +164,7 @@ class _InboxTabState extends State<InboxTab> {
               return const Center(child: CircularProgressIndicator());
             }
 
-            final senderUid = senderSnapshot.data;
+            final senderUid = senderSnapshot.data; //
 
             return ListView.builder(
               itemCount: inbox.length,
