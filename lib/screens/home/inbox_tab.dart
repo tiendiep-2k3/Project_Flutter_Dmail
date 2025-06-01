@@ -155,7 +155,7 @@ class _InboxTabState extends State<InboxTab> {
           final newCount = inbox.length;
           _showNewEmailNotification(newCount, lastCount);
           await _setLastEmailCount(newCount);
-        });
+        }); //
 
         return FutureBuilder<String?>(
           future: widget.filter.senderEmail != null ? getUidFromEmail(widget.filter.senderEmail!) : Future.value(null),
