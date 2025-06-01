@@ -156,7 +156,7 @@ class _InboxTabState extends State<InboxTab> {
               style: TextStyle(color: textColor),
             ),
           );
-        }
+        } //
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return Center(
