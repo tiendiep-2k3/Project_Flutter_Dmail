@@ -245,7 +245,7 @@ class _MainScreenState extends State<MainScreen> {
       title: Text(
         title,
         style: TextStyle(
-          color: color ?? Colors.deepPurple,
+          color: color ?? Colors.deepPurple, //
           fontWeight: FontWeight.w500, //
         ),
       ),
