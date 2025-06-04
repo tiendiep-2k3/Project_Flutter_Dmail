@@ -246,7 +246,7 @@ class _MainScreenState extends State<MainScreen> {
         title,
         style: TextStyle(
           color: color ?? Colors.deepPurple, 
-          fontWeight: FontWeight.w500, //
+          fontWeight: FontWeight.w500, //ddee
         ),
       ),
       onTap: onTap,
