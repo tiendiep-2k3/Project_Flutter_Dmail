@@ -329,6 +329,8 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
     final timeStr = widget.timestamp != null
         ? '${widget.timestamp!.day}/${widget.timestamp!.month}/${widget.timestamp!.year}, '
             '${widget.timestamp!.hour}:${widget.timestamp!.minute.toString().padLeft(2, '0')}'
@@ -369,7 +371,7 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
         ],
       ),
       body: Container(
-        color: Colors.deepPurple[50],
+        color: isDarkMode ? const Color(0xFF2B2043) : Colors.deepPurple[50],
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -378,7 +380,7 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDarkMode ? const Color(0xFF3B2C5E) : Colors.white,
                   borderRadius: BorderRadius.circular(18),
                   boxShadow: [
                     BoxShadow(
@@ -394,8 +396,8 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
                     Row(
                       children: [
                         CircleAvatar(
-                          backgroundColor: Colors.deepPurple[100],
-                          child: const Icon(Icons.person, color: Colors.deepPurple),
+                          backgroundColor: isDarkMode ? Colors.deepPurple[300] : Colors.deepPurple[100],
+                          child: Icon(Icons.person, color: isDarkMode ? Colors.white : Colors.deepPurple),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -405,17 +407,17 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
                               if (fromEmail != null)
                                 Text(
                                   fromEmail!,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: isDarkMode ? Colors.white : Colors.black),
                                 ),
                               if (toEmail != null)
                                 Text(
                                   'Đến: $toEmail',
-                                  style: const TextStyle(color: Colors.black54, fontSize: 13),
+                                  style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black54, fontSize: 13),
                                 ),
                               if (ccEmails.isNotEmpty && !isBccUser)
                                 Text(
                                   'Cc: ${ccEmails.join(', ')}',
-                                  style: const TextStyle(color: Colors.black54, fontSize: 13),
+                                  style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black54, fontSize: 13),
                                 ),
                             ],
                           ),
@@ -423,28 +425,28 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
                         const SizedBox(width: 8),
                         Text(
                           timeStr,
-                          style: const TextStyle(color: Colors.grey, fontSize: 12),
+                          style: TextStyle(color: isDarkMode ? Colors.white60 : Colors.grey, fontSize: 12),
                         ),
                       ],
                     ),
                     const SizedBox(height: 10),
                     Text(
                       widget.subject,
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black),
                     ),
                     const SizedBox(height: 10),
-                    Divider(color: Colors.deepPurple[100], thickness: 1),
+                    Divider(color: isDarkMode ? Colors.deepPurple[300] : Colors.deepPurple[100], thickness: 1),
                     const SizedBox(height: 6),
                     Text(
                       widget.body,
-                      style: const TextStyle(fontSize: 16),
+                      style: TextStyle(fontSize: 16, color: isDarkMode ? Colors.white : Colors.black),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 18),
               if (emailLabels.isNotEmpty) ...[
-                const Text("Nhãn:", style: TextStyle(fontWeight: FontWeight.bold)),
+                Text("Nhãn:", style: TextStyle(fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black)),
                 StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
                   stream: FirebaseFirestore.instance.collection('labels').doc(currentUid).snapshots(),
                   builder: (context, snapshot) {
@@ -459,8 +461,8 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
                           orElse: () => {'name': 'Không xác định', 'id': ''},
                         );
                         return Chip(
-                          label: Text(label['name']?.toString() ?? ''),
-                          backgroundColor: Colors.deepPurple[100],
+                          label: Text(label['name']?.toString() ?? '', style: TextStyle(color: isDarkMode ? Colors.white : Colors.deepPurple)),
+                          backgroundColor: isDarkMode ? Colors.deepPurple[300] : Colors.deepPurple[100],
                           onDeleted: () {
                             final updatedLabels = List<String>.from(emailLabels);
                             updatedLabels.remove(labelId);
@@ -474,7 +476,7 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
                 const SizedBox(height: 16),
               ],
               if (widget.attachments != null && widget.attachments!.isNotEmpty) ...[
-                const Text("Tệp đính kèm:", style: TextStyle(fontWeight: FontWeight.bold)),
+                Text("Tệp đính kèm:", style: TextStyle(fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black)),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -484,8 +486,8 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
                     final fileUrl = attachment['fileUrl'];
                     return ActionChip(
                       avatar: const Icon(Icons.attach_file, color: Colors.deepPurple),
-                      label: Text(fileName, style: const TextStyle(color: Colors.deepPurple)),
-                      backgroundColor: Colors.deepPurple[50],
+                      label: Text(fileName, style: TextStyle(color: isDarkMode ? Colors.white : Colors.deepPurple)),
+                      backgroundColor: isDarkMode ? Colors.deepPurple[300] : Colors.deepPurple[50],
                       onPressed: () async {
                         final uri = Uri.parse(fileUrl);
                         if (await canLaunchUrl(uri)) {

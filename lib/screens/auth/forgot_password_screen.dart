@@ -18,7 +18,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
 
-    // Xử lý số điện thoại: loại bỏ số 0 đầu nếu có
+    
     String input = _phoneController.text.trim();
     if (input.startsWith('0')) {
       input = input.substring(1);
@@ -93,6 +93,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   decoration: InputDecoration(
                     prefixIcon: const Icon(Icons.phone, color: Colors.deepPurple),
                     prefixText: '+84 ',
+                    prefixStyle: const TextStyle(color: Colors.deepPurple, fontSize: 16),
                     labelText: 'Số điện thoại',
                     labelStyle: const TextStyle(color: Colors.deepPurple),
                     border: OutlineInputBorder(

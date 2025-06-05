@@ -15,7 +15,7 @@ class ComposeEmailScreen extends StatefulWidget {
     this.toEmail,
     this.subject,
     this.body,
-  }) : super(key: key);//abàds
+  }) : super(key: key);
 
   @override
   State<ComposeEmailScreen> createState() => _ComposeEmailScreenState();
@@ -86,7 +86,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
       'subject': _subjectController.text.trim(),
       'body': _bodyController.text.trim(),
       'isDraft': true,
-      'isStarred': false, // Thêm trường isStarred
+      'isStarred': false,
       'timestamp': FieldValue.serverTimestamp(),
     };
 
@@ -172,7 +172,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
       'timestamp': FieldValue.serverTimestamp(),
       'isRead': false,
       'isDraft': false,
-      'isStarred': false, // Thêm trường isStarred
+      'isStarred': false,
       'attachments': attachments,
     };
 
@@ -254,7 +254,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
         ],
       ),
       body: Container(
-        color: Colors.deepPurple[50],
+        color: isDarkMode ? const Color(0xFF2B2043) : Colors.deepPurple[50],
         child: Form(
           key: _formKey,
           child: Column(
@@ -263,15 +263,15 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Column(
                   children: [
-                    _buildInputRow('Đến:', _toController, 'Nhập email người nhận', validator: (value) => value == null || value.isEmpty ? 'Bắt buộc nhập email' : null),
+                    _buildInputRow('Đến:', _toController, 'Nhập email người nhận', validator: (value) => value == null || value.isEmpty ? 'Bắt buộc nhập email' : null, isDarkMode: isDarkMode),
                     if (showCc)
-                      _buildInputRow('Cc:', _ccController, 'Nhập email CC'),
+                      _buildInputRow('Cc:', _ccController, 'Nhập email CC', isDarkMode: isDarkMode),
                     if (showBcc)
-                      _buildInputRow('Bcc:', _bccController, 'Nhập email BCC'),
+                      _buildInputRow('Bcc:', _bccController, 'Nhập email BCC', isDarkMode: isDarkMode),
                     Row(
                       children: [
                         Expanded(
-                          child: _buildInputRow('Tiêu đề:', _subjectController, 'Nhập tiêu đề email'),
+                          child: _buildInputRow('Tiêu đề:', _subjectController, 'Nhập tiêu đề email', isDarkMode: isDarkMode),
                         ),
                         TextButton(
                           onPressed: () => setState(() => showCc = !showCc),
@@ -295,7 +295,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
                     expands: true,
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: isDarkMode ? const Color(0xFF3B2C5E) : Colors.white,
                       hintText: 'Nhập nội dung email',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(18),
@@ -304,7 +304,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
                       contentPadding: const EdgeInsets.all(18),
                     ),
                     validator: (value) => value == null || value.isEmpty ? 'Nội dung không được để trống' : null,
-                    style: const TextStyle(fontSize: 15),
+                    style: TextStyle(fontSize: 15, color: isDarkMode ? Colors.white : Colors.black),
                   ),
                 ),
               ),
@@ -316,8 +316,8 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
                     spacing: 8,
                     runSpacing: 8,
                     children: attachedFiles.map((file) => Chip(
-                      backgroundColor: Colors.deepPurple[100],
-                      label: Text(file.name, style: const TextStyle(color: Colors.deepPurple)),
+                      backgroundColor: isDarkMode ? Colors.deepPurple[300] : Colors.deepPurple[100],
+                      label: Text(file.name, style: TextStyle(color: isDarkMode ? Colors.white : Colors.deepPurple)),
                       deleteIcon: const Icon(Icons.close, size: 18, color: Colors.deepPurple),
                       onDeleted: () {
                         setState(() {
@@ -337,7 +337,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
                       icon: const Icon(Icons.attach_file),
                       label: const Text('Đính kèm tệp'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
+                        backgroundColor: isDarkMode ? const Color(0xFF3B2C5E) : Colors.white,
                         foregroundColor: Colors.deepPurple,
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -370,7 +370,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
     );
   }
 
-  Widget _buildInputRow(String label, TextEditingController controller, String hint, {String? Function(String?)? validator}) {
+  Widget _buildInputRow(String label, TextEditingController controller, String hint, {String? Function(String?)? validator, bool isDarkMode = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -380,7 +380,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
             width: 70,
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.deepPurple,
                 fontWeight: FontWeight.w600,
                 fontSize: 15,
@@ -392,7 +392,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
               controller: controller,
               decoration: InputDecoration(
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: isDarkMode ? const Color(0xFF3B2C5E) : Colors.white,
                 hintText: hint,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
@@ -401,7 +401,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
                 contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
               ),
               validator: validator,
-              style: const TextStyle(fontSize: 15),
+              style: TextStyle(fontSize: 15, color: isDarkMode ? Colors.white : Colors.black),
             ),
           ),
         ],

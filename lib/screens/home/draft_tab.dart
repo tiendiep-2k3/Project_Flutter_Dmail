@@ -40,6 +40,7 @@ class DraftTab extends StatelessWidget {
               final subject = draft['subject'] ?? '(Không tiêu đề)';
               final body = draft['body'] ?? '';
               final fromUid = draft['fromUid'] ?? 'Không rõ';
+              final toEmail = draft['toEmail'] ?? '';
               final timestamp = (draft['timestamp'] as Timestamp?)?.toDate();
 
               String formattedTime = '';

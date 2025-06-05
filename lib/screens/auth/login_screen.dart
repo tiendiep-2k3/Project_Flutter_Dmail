@@ -23,7 +23,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
 
-    // Xử lý số điện thoại: loại bỏ số 0 đầu nếu có
     String input = _phoneController.text.trim();
     if (input.startsWith('0')) {
       input = input.substring(1);
@@ -32,7 +31,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final enteredPassword = _passwordController.text.trim();
 
     try {
-      // 1. Kiểm tra xem tài khoản có tồn tại
       final query = await FirebaseFirestore.instance
           .collection('users')
           .where('phone', isEqualTo: phone)
@@ -50,7 +48,6 @@ class _LoginScreenState extends State<LoginScreen> {
         throw Exception('Mật khẩu không đúng');
       }
 
-      // 2. Gửi mã OTP nếu mật khẩu đúng
       await FirebaseAuth.instance.verifyPhoneNumber(
         phoneNumber: phone,
         verificationCompleted: (_) {},
@@ -118,13 +115,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   fit: BoxFit.contain,
                 ),
                 const SizedBox(height: 24),
-                // Số điện thoại
                 TextFormField(
                   controller: _phoneController,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     prefixIcon: const Icon(Icons.phone, color: Colors.deepPurple),
                     prefixText: '+84 ',
+                    prefixStyle: const TextStyle(color: Colors.deepPurple, fontSize: 16),
                     labelText: 'Số điện thoại',
                     labelStyle: const TextStyle(color: Colors.deepPurple),
                     border: OutlineInputBorder(
@@ -153,7 +150,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                // Mật khẩu
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _isObscure,

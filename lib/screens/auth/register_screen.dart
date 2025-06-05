@@ -117,7 +117,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     filled: true,
                     fillColor: Colors.white,
-                    hintText: "Nhập số điênh thoại của bạn",
+                    hintText: "Nhập số điện thoại của bạn",
                     hintStyle: TextStyle(color: Colors.deepPurple.withOpacity(0.6))
                   ),
                   style: const TextStyle(color: Colors.deepPurple),
