@@ -8,11 +8,11 @@ class StarredTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Kiểm tra trạng thái đăng nhập
+    
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.pushReplacementNamed(context, '/login'); // Giả định có route login
+        Navigator.pushReplacementNamed(context, '/login'); 
       });
       return const Scaffold(
         body: Center(child: Text('Vui lòng đăng nhập để xem email được gắn sao.')),

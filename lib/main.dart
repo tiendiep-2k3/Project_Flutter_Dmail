@@ -3,7 +3,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:test3/screens/splash/splash_screen.dart';
 import 'package:test3/config/firebase_options.dart';
 
-// ✅ Biến toàn cục để quản lý ThemeMode
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
 
 void main() async {

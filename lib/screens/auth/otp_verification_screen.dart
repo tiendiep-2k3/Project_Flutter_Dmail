@@ -81,7 +81,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         }
       }
 
-      // Chuyển đến trang chính sau khi xác minh thành công
+      
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const MainScreen()),
